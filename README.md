@@ -178,6 +178,17 @@ Both distros, `--platform linux/amd64`, 2026-09-30: **38/38, no warnings**,
 about 1m35s each. A second run on the same box is clean too — 13/13 in
 `test/idempotency.sh`, no warnings, no manufactured `.dmc-backup.*`.
 
+The documented one-liner is verified separately, on bare `ubuntu:24.04` and
+`archlinux` containers with no `git` installed: it installs the prerequisites,
+clones, runs, and ends at `VERIFY OK`. Worth testing that path specifically —
+`test/docker.sh` copies the repo in and calls `bootstrap.sh` directly, so it
+never exercises `install.sh` itself.
+
+> Pushing a change does not update the one-liner immediately.
+> `raw.githubusercontent.com` sends `max-age=300`, so the URL serves the
+> previous version for up to five minutes, and a query-string cache-buster
+> does not help. Check with `curl -sI <url> | grep source-age`.
+
 ## Supported
 
 Ubuntu / Debian / Pop / Mint / elementary / Zorin, and Arch / Manjaro /
