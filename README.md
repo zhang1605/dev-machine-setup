@@ -1,4 +1,4 @@
-# dev-machine-config
+# dev-machine-setup
 
 One command to take a bare Ubuntu or Arch box to a working dev machine.
 
@@ -74,7 +74,7 @@ test/verify.sh      post-install assertions
 
 ## Re-running
 
-The checkout stays at `~/.dev-machine-config` and `dev-machine` lands on your
+The checkout stays at `~/.dev-machine-setup` and `dev-machine` lands on your
 `PATH`:
 
 ```sh
@@ -90,9 +90,9 @@ detected and pulled instead of re-cloned, and the rc block is replaced in place
 between its markers rather than appended.
 
 ```
-# >>> dev-machine-config >>>
+# >>> dev-machine-setup >>>
 ...generated...
-# <<< dev-machine-config <<<
+# <<< dev-machine-setup <<<
 ```
 
 Put your own customisations **outside** those markers and they survive.
@@ -111,13 +111,13 @@ Put your own customisations **outside** those markers and they survive.
 -h, --help
 ```
 
-Environment overrides: `DMC_REPO`, `DMC_BRANCH`, `DMC_DIR`,
-`DMC_NVIM_REPO`, `DMC_NVIM_BRANCH`, `NO_COLOR`.
+Environment overrides: `DMS_REPO`, `DMS_BRANCH`, `DMS_DIR`,
+`DMS_NVIM_REPO`, `DMS_NVIM_BRANCH`, `NO_COLOR`.
 
 ## Anything it won't do for you
 
 - **Backups, not merges.** An existing `~/.config/nvim`, `~/.tmux`, or a
-  hand-written `mise/config.toml` is moved to `<path>.dmc-backup.<timestamp>`
+  hand-written `mise/config.toml` is moved to `<path>.dms-backup.<timestamp>`
   and the warning is repeated in the final summary.
 - **`atuin register`/`login`** — your call, it needs credentials.
 - **Plugin bootstrap** — the first `nvim` launch installs LazyVim's plugins.
@@ -135,21 +135,21 @@ Entirely optional. The raw GitHub URL above needs no hosting and no DNS, and
 Where the clone comes from is a separate knob, in case you fork this:
 
 ```sh
-REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"   # install.sh
+REPO="${DMS_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"   # install.sh
 ```
 
-`DMC_REPO`, `DMC_BRANCH` and `DMC_DIR` all override it at runtime, so a fork
+`DMS_REPO`, `DMS_BRANCH` and `DMS_DIR` all override it at runtime, so a fork
 needs no edit:
 
 ```sh
-curl -fsSL .../install.sh | DMC_BRANCH=my-branch sh
+curl -fsSL .../install.sh | DMS_BRANCH=my-branch sh
 ```
 
 Or skip `install.sh` and clone by hand — it only exists to do this for you:
 
 ```sh
-git clone https://github.com/zhang1605/dev-machine-setup ~/.dev-machine-config
-bash ~/.dev-machine-config/bootstrap.sh
+git clone https://github.com/zhang1605/dev-machine-setup ~/.dev-machine-setup
+bash ~/.dev-machine-setup/bootstrap.sh
 ```
 
 ## Testing
@@ -157,12 +157,12 @@ bash ~/.dev-machine-config/bootstrap.sh
 ```sh
 bash test/unit.sh                      # fast, offline, safe on any machine
 bash test/docker.sh                    # real installs in ubuntu:24.04 + archlinux
-DMC_TWICE=1 bash test/docker.sh ubuntu # install twice, assert idempotency
+DMS_TWICE=1 bash test/docker.sh ubuntu # install twice, assert idempotency
 bash test/verify.sh                    # run on a box you just provisioned
 bash test/idempotency.sh               # run there after a second install
 ```
 
-`test/unit.sh` (35 assertions) covers managed-block replacement, the generated
+`test/unit.sh` (40 assertions) covers managed-block replacement, the generated
 `config.toml` (parsed and asserted with `tomllib`), the generated rc files
 (`bash -n` plus content checks, including that atuin's own installer lines
 aren't duplicated), argument parsing, and the `--only`/`--skip` filter.
@@ -176,7 +176,7 @@ and node pinned versions asserted, `[shell_alias]` exercised through
 
 Both distros, `--platform linux/amd64`, 2026-09-30: **38/38, no warnings**,
 about 1m35s each. A second run on the same box is clean too — 13/13 in
-`test/idempotency.sh`, no warnings, no manufactured `.dmc-backup.*`.
+`test/idempotency.sh`, no warnings, no manufactured `.dms-backup.*`.
 
 The documented one-liner is verified separately, on bare `ubuntu:24.04` and
 `archlinux` containers with no `git` installed: it installs the prerequisites,

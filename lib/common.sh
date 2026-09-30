@@ -98,17 +98,23 @@ as_user() {
 
 # ------------------------------------------------------- managed file blocks
 # Replace (or append) a marker-delimited block in a file. Idempotent.
-BLOCK_BEGIN='# >>> dev-machine-config >>>'
-BLOCK_END='# <<< dev-machine-config <<<'
+BLOCK_BEGIN='# >>> dev-machine-setup >>>'
+BLOCK_END='# <<< dev-machine-setup <<<'
+
+# This project was briefly called dev-machine-config. A box provisioned then
+# carries a block under the old markers, which would otherwise be left behind
+# to duplicate every export. Strip it too.
+LEGACY_BEGIN='# >>> dev-machine-config >>>'
+LEGACY_END='# <<< dev-machine-config <<<'
 
 write_block() {
   local file="$1" body="$2" tmp
   mkdir -p "$(dirname "$file")"
   [[ -f $file ]] || : >"$file"
   tmp="$(mktemp)"
-  awk -v b="$BLOCK_BEGIN" -v e="$BLOCK_END" '
-    $0 == b { inblock = 1; next }
-    $0 == e { inblock = 0; next }
+  awk -v b="$BLOCK_BEGIN" -v e="$BLOCK_END" -v lb="$LEGACY_BEGIN" -v le="$LEGACY_END" '
+    $0 == b || $0 == lb { inblock = 1; next }
+    $0 == e || $0 == le { inblock = 0; next }
     !inblock { print }
   ' "$file" >"$tmp"
   # collapse trailing blank lines, then append a fresh block
@@ -126,7 +132,7 @@ write_block() {
 backup_path() {
   local p="$1"
   [[ -e $p || -L $p ]] || return 0
-  local dest="${p}.dmc-backup.$(date +%Y%m%d%H%M%S)"
+  local dest="${p}.dms-backup.$(date +%Y%m%d%H%M%S)"
   mv "$p" "$dest"
   warn "moved existing $p -> $dest"
 }

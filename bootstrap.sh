@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dev-machine-config - the real installer.
+# dev-machine-setup - the real installer.
 #
 #   bash bootstrap.sh                       interactive
 #   bash bootstrap.sh --yes                 accept all defaults
@@ -7,17 +7,17 @@
 #
 set -uo pipefail
 
-DMC_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DMS_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 declare -a WARNINGS=()
 
 # shellcheck source=lib/common.sh
-source "$DMC_ROOT/lib/common.sh"
+source "$DMS_ROOT/lib/common.sh"
 
 ALL_MODULES=(pkgs mise omz atuin brew tmux nvim ai git shell)
 
 usage() {
   cat >&2 <<USAGE
-${C_BOLD}dev-machine-config${C_RESET}
+${C_BOLD}dev-machine-setup${C_RESET}
 
   bash bootstrap.sh [options]
 
@@ -51,7 +51,7 @@ while [[ $# -gt 0 ]]; do
     --mise-extras=*)  MISE_EXTRAS_ARG="${1#*=}" ;;
     --ai=*)           AI_TOOLS_ARG="${1#*=}" ;;
     --email=*)        GIT_EMAIL_ARG="${1#*=}" ;;
-    --name=*)         DMC_GIT_NAME="${1#*=}" ;;
+    --name=*)         DMS_GIT_NAME="${1#*=}" ;;
     --list-modules)   printf '%s\n' "${ALL_MODULES[@]}"; exit 0 ;;
     -h|--help)        usage; exit 0 ;;
     *)                printf 'Unknown option: %s\n\n' "$1" >&2; usage; exit 2 ;;
@@ -60,17 +60,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 # shellcheck source=lib/pkgs.sh
-source "$DMC_ROOT/lib/pkgs.sh"
+source "$DMS_ROOT/lib/pkgs.sh"
 # shellcheck source=lib/mise.sh
-source "$DMC_ROOT/lib/mise.sh"
+source "$DMS_ROOT/lib/mise.sh"
 # shellcheck source=lib/shell.sh
-source "$DMC_ROOT/lib/shell.sh"
+source "$DMS_ROOT/lib/shell.sh"
 # shellcheck source=lib/extras.sh
-source "$DMC_ROOT/lib/extras.sh"
+source "$DMS_ROOT/lib/extras.sh"
 # shellcheck source=lib/ai.sh
-source "$DMC_ROOT/lib/ai.sh"
+source "$DMS_ROOT/lib/ai.sh"
 # shellcheck source=lib/git.sh
-source "$DMC_ROOT/lib/git.sh"
+source "$DMS_ROOT/lib/git.sh"
 
 _in_csv() { [[ ",$1," == *",$2,"* ]]; }
 enabled() {
@@ -84,10 +84,10 @@ enabled() {
 detect_os
 setup_sudo
 
-printf '\n%s\n' "${C_BOLD}${C_CYAN}dev-machine-config${C_RESET}" >&2
+printf '\n%s\n' "${C_BOLD}${C_CYAN}dev-machine-setup${C_RESET}" >&2
 log "os        : $OS_NAME  (pkg: $PKG)"
 log "user      : $(id -un)$( [[ ${IS_ROOT} -eq 1 ]] && printf ' (root)')"
-log "repo      : $DMC_ROOT"
+log "repo      : $DMS_ROOT"
 log "mode      : $( interactive && printf 'interactive' || printf 'non-interactive (defaults)' )"
 [[ -n $ONLY ]] && log "only      : $ONLY"
 [[ -n $SKIP ]] && log "skip      : $SKIP"
@@ -116,7 +116,7 @@ fi
 
 # Make `dev-machine` available on PATH regardless of which modules run.
 mkdir -p "$HOME/.local/bin"
-ln -sfn "$DMC_ROOT/bin/dev-machine" "$HOME/.local/bin/dev-machine"
+ln -sfn "$DMS_ROOT/bin/dev-machine" "$HOME/.local/bin/dev-machine"
 
 START=$(date +%s)
 

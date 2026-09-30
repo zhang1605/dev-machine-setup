@@ -35,6 +35,20 @@ t "body present once"         "$([ "$(grep -cF 'line-a' "$F")" = 1 ] && echo 0 |
 write_block "$F" "replaced"
 t "block replaced, not appended" "$([ "$(grep -cF 'line-a' "$F")" = 0 ] && echo 0 || echo 1)"
 
+echo "== legacy dev-machine-config block is adopted, not orphaned =="
+L="$TMP/legacy-rc"
+{ printf 'export MINE=1\n'
+  printf '%s\n' "$LEGACY_BEGIN"
+  printf 'export PATH="/old/path:$PATH"\n'
+  printf '%s\n' "$LEGACY_END"
+  printf 'export AFTER=1\n'; } > "$L"
+write_block "$L" "fresh-body"
+t "legacy begin marker gone"  "$([ "$(grep -cF "$LEGACY_BEGIN" "$L")" = 0 ] && echo 0 || echo 1)"
+t "legacy end marker gone"    "$([ "$(grep -cF "$LEGACY_END" "$L")" = 0 ] && echo 0 || echo 1)"
+t "legacy body gone"          "$([ "$(grep -cF '/old/path' "$L")" = 0 ] && echo 0 || echo 1)"
+t "new marker present once"   "$([ "$(grep -cF "$BLOCK_BEGIN" "$L")" = 1 ] && echo 0 || echo 1)"
+t "user lines around it kept" "$(grep -qF 'export MINE=1' "$L" && grep -qF 'export AFTER=1' "$L"; echo $?)"
+
 echo "== non-interactive defaults =="
 choose_mise_extras
 t "mise defaults = terraform terragrunt changie duckdb" \
@@ -88,7 +102,7 @@ print('  PASS snowflake-only variant is valid TOML')" || FAIL=1
 # backup on foreign config
 printf 'x = 1\n' > "$MISE_CONFIG"
 write_mise_config >/dev/null 2>&1
-t "foreign config backed up" "$(ls "$MISE_CONFIG_DIR"/config.toml.dmc-backup.* >/dev/null 2>&1; echo $?)"
+t "foreign config backed up" "$(ls "$MISE_CONFIG_DIR"/config.toml.dms-backup.* >/dev/null 2>&1; echo $?)"
 
 echo "== rc body =="
 Z="$HOME/.zshrc"; : > "$Z"

@@ -4,8 +4,8 @@
 #   bash test/docker.sh                  # ubuntu + arch, both as linux/amd64
 #   bash test/docker.sh ubuntu           # one target
 #   bash test/docker.sh ubuntu-arm       # native arm64, fast iteration
-#   DMC_PLATFORM=linux/arm64 bash test/docker.sh ubuntu
-#   DMC_TWICE=1 bash test/docker.sh ubuntu   # run twice, check idempotency
+#   DMS_PLATFORM=linux/arm64 bash test/docker.sh ubuntu
+#   DMS_TWICE=1 bash test/docker.sh ubuntu   # run twice, check idempotency
 #
 # Runs the real installer non-interactively as an unprivileged sudo user, then
 # runs test/verify.sh. Expect 10-20 min per image and a lot of network traffic;
@@ -19,12 +19,12 @@
 # you `brew install` there compiles from source.
 set -uo pipefail
 
-# The repo to install from. Defaults to this script's parent, but set DMC_SRC
+# The repo to install from. Defaults to this script's parent, but set DMS_SRC
 # explicitly if you have copied this script somewhere else - otherwise ROOT
 # resolves relative to the copy and you mount the wrong directory.
-ROOT="${DMC_SRC:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+ROOT="${DMS_SRC:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 [ -f "$ROOT/bootstrap.sh" ] || {
-  echo "no bootstrap.sh under $ROOT - set DMC_SRC to the repo root" >&2; exit 1; }
+  echo "no bootstrap.sh under $ROOT - set DMS_SRC to the repo root" >&2; exit 1; }
 
 if [ "$#" -gt 0 ]; then TARGETS=("$@"); else TARGETS=(ubuntu arch); fi
 command -v docker >/dev/null || { echo "docker not found" >&2; exit 1; }
@@ -67,7 +67,7 @@ for target in "${TARGETS[@]}"; do
     status=1; continue
   fi
   read -r image platform <<<"$spec"
-  platform="${DMC_PLATFORM:-$platform}"
+  platform="${DMS_PLATFORM:-$platform}"
 
   printf '\n==============================================================\n'
   printf '  %s  (%s, %s%s)\n' "$target" "$image" "$platform" \
@@ -81,15 +81,15 @@ for target in "${TARGETS[@]}"; do
     $(prep_for "$target")
     useradd -m -s /bin/bash dev
     echo 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev
-    cp -r /src /home/dev/.dev-machine-config
-    chown -R dev:dev /home/dev/.dev-machine-config
-    su - dev -c 'bash ~/.dev-machine-config/bootstrap.sh --yes --ai= --email=navex'
-    if [ -n "${DMC_TWICE:-}" ]; then
+    cp -r /src /home/dev/.dev-machine-setup
+    chown -R dev:dev /home/dev/.dev-machine-setup
+    su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --email=navex'
+    if [ -n "${DMS_TWICE:-}" ]; then
       echo; echo '########## second run (idempotency) ##########'
-      su - dev -c 'bash ~/.dev-machine-config/bootstrap.sh --yes --ai= --email=navex'
-      su - dev -c 'bash ~/.dev-machine-config/test/idempotency.sh'
+      su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --email=navex'
+      su - dev -c 'bash ~/.dev-machine-setup/test/idempotency.sh'
     fi
-    su - dev -c 'bash ~/.dev-machine-config/test/verify.sh'
+    su - dev -c 'bash ~/.dev-machine-setup/test/verify.sh'
   " || { echo "  >>> $target FAILED"; status=1; }
 done
 

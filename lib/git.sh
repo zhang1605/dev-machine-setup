@@ -2,7 +2,7 @@
 # Global git configuration.
 # shellcheck shell=bash
 
-GIT_NAME_DEFAULT="${DMC_GIT_NAME:-Michael Zhang}"
+GIT_NAME_DEFAULT="${DMS_GIT_NAME:-Michael Zhang}"
 GIT_EMAIL_WORK="michael.zhang@navex.com"
 GIT_EMAIL_PERSONAL="zhang1605@gmail.com"
 

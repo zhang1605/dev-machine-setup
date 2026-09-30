@@ -2,10 +2,10 @@
 # Thin wrapper around the checkout so you can re-run pieces later.
 set -uo pipefail
 
-DIR="${DMC_DIR:-$HOME/.dev-machine-config}"
-BRANCH="${DMC_BRANCH:-main}"
+DIR="${DMS_DIR:-$HOME/.dev-machine-setup}"
+BRANCH="${DMS_BRANCH:-main}"
 
-[[ -f $DIR/bootstrap.sh ]] || { echo "dev-machine-config not found at $DIR" >&2; exit 1; }
+[[ -f $DIR/bootstrap.sh ]] || { echo "dev-machine-setup not found at $DIR" >&2; exit 1; }
 
 cmd="${1:-help}"; [[ $# -gt 0 ]] && shift
 

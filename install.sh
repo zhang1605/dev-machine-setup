@@ -1,5 +1,5 @@
 #!/bin/sh
-# dev-machine-config bootstrap
+# dev-machine-setup bootstrap
 #
 #   curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh
 #   curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh -s -- --yes
@@ -9,9 +9,9 @@
 
 set -eu
 
-REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"
-BRANCH="${DMC_BRANCH:-main}"
-DIR="${DMC_DIR:-$HOME/.dev-machine-config}"
+REPO="${DMS_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"
+BRANCH="${DMS_BRANCH:-main}"
+DIR="${DMS_DIR:-$HOME/.dev-machine-setup}"
 
 say()  { printf '\033[34m==>\033[0m %s\n' "$*" >&2; }
 warn() { printf '\033[33m  !\033[0m %s\n' "$*" >&2; }
@@ -80,15 +80,24 @@ if [ -n "$need_boot" ]; then
 fi
 
 # --- fetch the repo ----------------------------------------------------------
+# Adopt a checkout from when this project was called dev-machine-config, so a
+# box provisioned then does not end up with two of them.
+LEGACY_DIR="$HOME/.dev-machine-config"
+if [ -d "$LEGACY_DIR" ] && [ ! -e "$DIR" ]; then
+  say "Renaming $LEGACY_DIR -> $DIR"
+  mv "$LEGACY_DIR" "$DIR"
+fi
+
 if [ -d "$DIR/.git" ]; then
   say "Updating $DIR"
+  git -C "$DIR" remote set-url origin "$REPO" 2>/dev/null || true
   git -C "$DIR" fetch --quiet origin "$BRANCH" || warn "fetch failed; using local copy"
   git -C "$DIR" checkout --quiet "$BRANCH" 2>/dev/null || true
   git -C "$DIR" reset --hard --quiet "origin/$BRANCH" 2>/dev/null || warn "could not fast-forward; using local copy"
 elif [ -d "$DIR" ] && [ -f "$DIR/bootstrap.sh" ]; then
   say "Using existing checkout at $DIR"
 else
-  [ -e "$DIR" ] && die "$DIR exists but is not a dev-machine-config checkout. Move it aside or set DMC_DIR."
+  [ -e "$DIR" ] && die "$DIR exists but is not a dev-machine-setup checkout. Move it aside or set DMS_DIR."
   say "Cloning $REPO -> $DIR"
   git clone --depth 1 --branch "$BRANCH" "$REPO" "$DIR"
 fi

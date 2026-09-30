@@ -24,8 +24,8 @@ chk() {
 
 echo "-- managed block appears exactly once --"
 for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
-  chk "$(basename "$rc") begin marker" "$(count_lines '^# >>> dev-machine-config >>>' "$rc")" 1
-  chk "$(basename "$rc") end marker"   "$(count_lines '^# <<< dev-machine-config <<<' "$rc")" 1
+  chk "$(basename "$rc") begin marker" "$(count_lines '^# >>> dev-machine-setup >>>' "$rc")" 1
+  chk "$(basename "$rc") end marker"   "$(count_lines '^# <<< dev-machine-setup <<<' "$rc")" 1
 done
 
 echo "-- shell init lines not duplicated --"
@@ -36,10 +36,10 @@ chk "zoxide init zsh"   "$(count_lines 'zoxide init zsh'   "$HOME/.zshrc")"  1
 chk "alias ll"          "$(count_lines 'alias ll='         "$HOME/.zshrc")"  1
 
 echo "-- re-runs must not manufacture backups --"
-chk "nvim backups"        "$(count_paths "$HOME/.config/nvim.dmc-backup.*")"             0
-chk "tmux backups"        "$(count_paths "$HOME/.tmux.dmc-backup.*")"                    0
-chk "tmux.conf backups"   "$(count_paths "$HOME/.tmux.conf.dmc-backup.*")"               0
-chk "mise config backups" "$(count_paths "$HOME/.config/mise/config.toml.dmc-backup.*")" 0
+chk "nvim backups"        "$(count_paths "$HOME/.config/nvim.dms-backup.*")"             0
+chk "tmux backups"        "$(count_paths "$HOME/.tmux.dms-backup.*")"                    0
+chk "tmux.conf backups"   "$(count_paths "$HOME/.tmux.conf.dms-backup.*")"               0
+chk "mise config backups" "$(count_paths "$HOME/.config/mise/config.toml.dms-backup.*")" 0
 
 echo
 if [ "$fails" = 0 ]; then echo "IDEMPOTENCY OK"; else echo "IDEMPOTENCY FAILED"; fi

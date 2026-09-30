@@ -44,8 +44,8 @@ check "homebrew"                 'test -x /home/linuxbrew/.linuxbrew/bin/brew'
 check "dev-machine on PATH"      'command -v dev-machine'
 
 echo "-- shell wiring --"
-check "zshrc managed block"      'grep -q "dev-machine-config" "$HOME/.zshrc"'
-check "bashrc managed block"     'grep -q "dev-machine-config" "$HOME/.bashrc"'
+check "zshrc managed block"      'grep -q "dev-machine-setup" "$HOME/.zshrc"'
+check "bashrc managed block"     'grep -q "dev-machine-setup" "$HOME/.bashrc"'
 check "zsh is default shell"     'getent passwd "$(id -un)" | grep -q zsh'
 check "mise activates in zsh"    'zsh -lic "command -v mise"'
 check "shell_alias l works"      'zsh -lic "alias l" | grep -q eza'

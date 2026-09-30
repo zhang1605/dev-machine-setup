@@ -4,7 +4,7 @@
 
 MISE_CONFIG_DIR="${MISE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/mise}"
 MISE_CONFIG="$MISE_CONFIG_DIR/config.toml"
-MISE_MARKER='# managed by dev-machine-config'
+MISE_MARKER='# managed by dev-machine-setup'
 
 # Always installed.
 MISE_CORE_TOOLS=(
@@ -67,7 +67,7 @@ write_mise_config() {
   mkdir -p "$MISE_CONFIG_DIR"
 
   if [[ -f $MISE_CONFIG ]] && ! head -1 "$MISE_CONFIG" | grep -qF "$MISE_MARKER"; then
-    cp "$MISE_CONFIG" "$MISE_CONFIG.dmc-backup.$(date +%Y%m%d%H%M%S)"
+    cp "$MISE_CONFIG" "$MISE_CONFIG.dms-backup.$(date +%Y%m%d%H%M%S)"
     warn "backed up your existing $MISE_CONFIG"
   fi
 

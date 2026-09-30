@@ -49,8 +49,8 @@ install_tmux_conf() {
 install_lazyvim() {
   step "Neovim config (LazyVim starter)"
   local dir="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
-  local repo="${DMC_NVIM_REPO:-https://github.com/MichaelZhang-Navex/lazyvim-starter}"
-  local branch="${DMC_NVIM_BRANCH:-michael}"
+  local repo="${DMS_NVIM_REPO:-https://github.com/MichaelZhang-Navex/lazyvim-starter}"
+  local branch="${DMS_NVIM_BRANCH:-michael}"
 
   if [[ -d $dir/.git ]]; then
     skip "$dir is already a git checkout (leaving it alone)"
