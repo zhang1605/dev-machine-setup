@@ -6,9 +6,11 @@
 # ---------------------------------------------------------------- tty & colors
 # Under `curl ... | sh` stdin is the pipe, so all prompting goes through
 # /dev/tty on fd 3 (read) and fd 4 (draw).
-# Probe /dev/tty in a subshell first: a failing `exec` redirection can leave the
-# shell's own descriptors in a half-applied state.
-if { : </dev/tty; } 2>/dev/null && { : >/dev/tty; } 2>/dev/null; then
+# Probe /dev/tty in a subshell first, and note that `[ -r /dev/tty ]` is not the
+# test you want: it checks permission bits, but with no controlling terminal the
+# node is readable and opening it still fails with ENXIO. The subshell also
+# keeps a failed `exec` from leaving this shell's descriptors half-applied.
+if ( : </dev/tty ) 2>/dev/null && ( : >/dev/tty ) 2>/dev/null; then
   exec 3</dev/tty 4>/dev/tty
   TTY_OK=1
 else

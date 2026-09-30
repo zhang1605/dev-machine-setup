@@ -37,12 +37,23 @@ case "$ID" in
     ;;
 esac
 
+# Can we actually OPEN the terminal? `[ -r /dev/tty ]` only checks permission
+# bits: with no controlling terminal the node is readable but opening it fails
+# with ENXIO, and a failed redirection under `set -e` takes the script with it.
+# The subshell contains that failure - `:` is a POSIX special builtin, so a
+# redirection error on it is fatal to a non-interactive shell.
+tty_ok() { ( : </dev/tty ) 2>/dev/null; }
+
 if [ "$(id -u)" = "0" ]; then
   SUDO=""
 elif command -v sudo >/dev/null 2>&1; then
   SUDO="sudo"
   say "Caching sudo credentials"
-  if [ -r /dev/tty ]; then sudo -v </dev/tty; else sudo -v; fi
+  if tty_ok; then
+    sudo -v </dev/tty || die "sudo authentication failed."
+  elif ! sudo -v; then
+    die "sudo wants a password and there is no terminal to ask on. Either run 'sudo -v' first, or re-run attached to a tty."
+  fi
 else
   die "Run as root or install sudo first."
 fi
