@@ -94,7 +94,7 @@ echo "== rc body =="
 Z="$HOME/.zshrc"; : > "$Z"
 write_block "$Z" "$(_rc_body zsh "$Z")"
 bash -n "$Z"; t "generated zshrc is valid shell" $?
-for n in 'mise activate zsh' 'atuin init zsh' 'zoxide init zsh' 'fzf --zsh' 'linuxbrew' 'EDITOR="nvim"' '.local/bin'; do
+for n in 'mise activate zsh' 'atuin init zsh' 'zoxide init zsh' 'fzf --zsh' 'linuxbrew' 'EDITOR="nvim"' '.local/bin' '.atuin/bin'; do
   t "zshrc contains: $n" "$(has "$Z" "$n"; echo $?)"
 done
 # atuin already configured by its own installer -> don't duplicate

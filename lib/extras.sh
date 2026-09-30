@@ -4,9 +4,23 @@
 
 install_atuin() {
   step "atuin"
-  if have atuin; then skip "atuin already installed"; return 0; fi
-  curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh \
-    && ok "atuin installed" || warn "atuin install failed"
+  if have atuin || [[ -x $HOME/.atuin/bin/atuin ]]; then
+    skip "atuin already installed"
+    return 0
+  fi
+
+  # --non-interactive is load-bearing, not just a preference. Without it the
+  # upstream script runs `if { exec 3</dev/tty; } 2>/dev/null` under `set -e`,
+  # and a failed exec redirection makes a non-interactive shell exit - so it
+  # dies silently, before its own banner, on any box without a tty. The flag
+  # skips that block entirely.
+  if curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh -s -- --non-interactive; then
+    export PATH="$HOME/.atuin/bin:$PATH"
+    ok "atuin installed"
+    log "run 'atuin register' (or 'atuin login') if you want history sync"
+  else
+    warn "atuin install failed"
+  fi
 }
 
 install_tmux_conf() {

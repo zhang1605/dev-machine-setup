@@ -5,7 +5,7 @@
 #   bash test/verify.sh
 #
 set -u
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.atuin/bin:$PATH"
 fails=0
 check() { if eval "$2" >/dev/null 2>&1; then echo "  PASS $1"; else echo "  FAIL $1"; fails=1; fi; }
 

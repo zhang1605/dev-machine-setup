@@ -17,7 +17,13 @@
 # its own mirrors, and Homebrew ships no bottles for ARM Linux, so anything
 # you `brew install` there compiles from source.
 set -uo pipefail
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# The repo to install from. Defaults to this script's parent, but set DMC_SRC
+# explicitly if you have copied this script somewhere else - otherwise ROOT
+# resolves relative to the copy and you mount the wrong directory.
+ROOT="${DMC_SRC:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+[ -f "$ROOT/bootstrap.sh" ] || {
+  echo "no bootstrap.sh under $ROOT - set DMC_SRC to the repo root" >&2; exit 1; }
 
 if [ "$#" -gt 0 ]; then TARGETS=("$@"); else TARGETS=(ubuntu arch); fi
 command -v docker >/dev/null || { echo "docker not found" >&2; exit 1; }
@@ -37,8 +43,17 @@ spec_for() {
 prep_for() {
   case "$1" in
     ubuntu*) echo 'apt-get update -qq && apt-get install -y -qq sudo git curl ca-certificates >/dev/null' ;;
-    arch*)   echo 'pacman-key --init >/dev/null 2>&1 || true
-                   pacman -Sy --noconfirm --needed sudo git curl >/dev/null' ;;
+    arch*)   cat <<'SH'
+# Container-only concession: pacman 7 drops to an unprivileged user and installs a
+# seccomp filter to download, which fails with EINVAL under qemu-user
+# emulation ("error restricting syscalls via seccomp: 22"). Real Arch boxes are
+# fine, so this stays out of lib/pkgs.sh.
+sed -i 's/^[[:space:]]*DownloadUser/#DownloadUser/' /etc/pacman.conf
+grep -q '^DisableSandbox' /etc/pacman.conf || sed -i '/^\[options\]/a DisableSandbox' /etc/pacman.conf
+pacman-key --init >/dev/null 2>&1 || true
+pacman -Sy --noconfirm --needed sudo git curl >/dev/null
+SH
+             ;;
   esac
 }
 
@@ -58,7 +73,9 @@ for target in "${TARGETS[@]}"; do
     "$([ "$platform" = "$HOST_PLATFORM" ] && printf ' native' || printf ' emulated - slow')"
   printf '==============================================================\n'
 
-  docker run --rm --platform "$platform" -v "$ROOT:/src:ro" "$image" bash -c "
+  # seccomp=unconfined for the same pacman-under-emulation reason as above.
+  docker run --rm --platform "$platform" --security-opt seccomp=unconfined \
+    -v "$ROOT:/src:ro" "$image" bash -c "
     set -e
     $(prep_for "$target")
     useradd -m -s /bin/bash dev
