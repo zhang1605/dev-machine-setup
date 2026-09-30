@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Thin wrapper around the checkout so you can re-run pieces later.
+set -uo pipefail
+
+DIR="${DMC_DIR:-$HOME/.dev-machine-config}"
+BRANCH="${DMC_BRANCH:-main}"
+
+[[ -f $DIR/bootstrap.sh ]] || { echo "dev-machine-config not found at $DIR" >&2; exit 1; }
+
+cmd="${1:-help}"; [[ $# -gt 0 ]] && shift
+
+case "$cmd" in
+  run)
+    exec bash "$DIR/bootstrap.sh" "$@"
+    ;;
+  update)
+    git -C "$DIR" pull --ff-only origin "$BRANCH" || exit 1
+    exec bash "$DIR/bootstrap.sh" "$@"
+    ;;
+  pull)
+    exec git -C "$DIR" pull --ff-only origin "$BRANCH"
+    ;;
+  modules)
+    exec bash "$DIR/bootstrap.sh" --list-modules
+    ;;
+  path)
+    echo "$DIR"
+    ;;
+  edit)
+    exec "${EDITOR:-nvim}" "$DIR"
+    ;;
+  help|-h|--help)
+    cat <<USAGE
+dev-machine <command> [args]
+
+  run [opts]     re-run the installer (opts go to bootstrap.sh)
+  update [opts]  git pull, then re-run
+  pull           git pull only
+  modules        list module names
+  path           print the checkout path
+  edit           open the checkout in \$EDITOR
+
+Examples
+  dev-machine run --only=mise
+  dev-machine run --only=shell,git
+  dev-machine update --yes
+USAGE
+    ;;
+  *)
+    echo "unknown command: $cmd (try 'dev-machine help')" >&2
+    exit 2
+    ;;
+esac
