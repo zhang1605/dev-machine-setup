@@ -5,6 +5,7 @@
 #   bash test/docker.sh ubuntu           # one target
 #   bash test/docker.sh ubuntu-arm       # native arm64, fast iteration
 #   DMC_PLATFORM=linux/arm64 bash test/docker.sh ubuntu
+#   DMC_TWICE=1 bash test/docker.sh ubuntu   # run twice, check idempotency
 #
 # Runs the real installer non-interactively as an unprivileged sudo user, then
 # runs test/verify.sh. Expect 10-20 min per image and a lot of network traffic;
@@ -83,6 +84,11 @@ for target in "${TARGETS[@]}"; do
     cp -r /src /home/dev/.dev-machine-config
     chown -R dev:dev /home/dev/.dev-machine-config
     su - dev -c 'bash ~/.dev-machine-config/bootstrap.sh --yes --ai= --email=navex'
+    if [ -n "${DMC_TWICE:-}" ]; then
+      echo; echo '########## second run (idempotency) ##########'
+      su - dev -c 'bash ~/.dev-machine-config/bootstrap.sh --yes --ai= --email=navex'
+      su - dev -c 'bash ~/.dev-machine-config/test/idempotency.sh'
+    fi
     su - dev -c 'bash ~/.dev-machine-config/test/verify.sh'
   " || { echo "  >>> $target FAILED"; status=1; }
 done

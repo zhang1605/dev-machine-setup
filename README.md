@@ -148,15 +148,28 @@ bash ~/.dev-machine-config/bootstrap.sh
 ## Testing
 
 ```sh
-bash test/unit.sh          # fast, offline, safe on any machine
-bash test/docker.sh        # real installs in ubuntu:24.04 + archlinux
-bash test/verify.sh        # assertions, run on a box you just provisioned
+bash test/unit.sh                      # fast, offline, safe on any machine
+bash test/docker.sh                    # real installs in ubuntu:24.04 + archlinux
+DMC_TWICE=1 bash test/docker.sh ubuntu # install twice, assert idempotency
+bash test/verify.sh                    # run on a box you just provisioned
+bash test/idempotency.sh               # run there after a second install
 ```
 
-`test/unit.sh` covers managed-block idempotency, generated `config.toml`
-(parsed and asserted with `tomllib`), generated rc files (`bash -n` plus content
-checks, including that atuin's own installer lines aren't duplicated), argument
-parsing, and the `--only`/`--skip` filter.
+`test/unit.sh` (35 assertions) covers managed-block replacement, the generated
+`config.toml` (parsed and asserted with `tomllib`), the generated rc files
+(`bash -n` plus content checks, including that atuin's own installer lines
+aren't duplicated), argument parsing, and the `--only`/`--skip` filter.
+
+`test/docker.sh` does a real end-to-end install and then runs
+`test/verify.sh` (38 checks: every tool resolved through `mise which`, python
+and node pinned versions asserted, `[shell_alias]` exercised through
+`zsh -lic`, the `chsh` change read back out of `/etc/passwd`).
+
+### Last verified
+
+Both distros, `--platform linux/amd64`, 2026-09-30: **38/38, no warnings**,
+about 1m35s each. A second run on the same box is clean too — 13/13 in
+`test/idempotency.sh`, no warnings, no manufactured `.dmc-backup.*`.
 
 ## Supported
 
