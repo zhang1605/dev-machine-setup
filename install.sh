@@ -1,8 +1,8 @@
 #!/bin/sh
 # dev-machine-config bootstrap
 #
-#   curl -fsSL https://herdr.dev/install.sh | sh
-#   curl -fsSL https://herdr.dev/install.sh | sh -s -- --yes
+#   curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh -s -- --yes
 #
 # Tiny POSIX bootstrap: make sure git/curl exist, clone the repo, hand off to
 # bootstrap.sh (bash). Everything interesting lives in the repo.

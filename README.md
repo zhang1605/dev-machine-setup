@@ -3,17 +3,26 @@
 One command to take a bare Ubuntu or Arch box to a working dev machine.
 
 ```sh
-curl -fsSL https://herdr.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh
 ```
 
-Non-interactive (CI, cloud-init, Dockerfile):
+That is the real, working command — nothing to host first. Run it on the new
+box and answer three prompts.
+
+Non-interactive (CI, cloud-init, Dockerfile), no prompts at all:
 
 ```sh
-curl -fsSL https://herdr.dev/install.sh | sh -s -- --yes --email=navex --ai=claude
+curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh -s -- --yes --email=navex --ai=claude
 ```
 
-> **Before this works you have to host `install.sh` and push this repo.**
-> See [Hosting](#hosting).
+If you'd rather not pipe a URL into a shell sight unseen — reasonable — read it
+first, then run the same file:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh -o install.sh
+less install.sh
+sh install.sh
+```
 
 ## What it does
 
@@ -114,31 +123,29 @@ Environment overrides: `DMC_REPO`, `DMC_BRANCH`, `DMC_DIR`,
 - **Plugin bootstrap** — the first `nvim` launch installs LazyVim's plugins.
 - **Homebrew as root** is skipped (brew refuses); everything else works as root.
 
-## Hosting
+## A shorter URL, if you ever want one
 
-`install.sh` hardcodes where to clone from:
+Entirely optional. The raw GitHub URL above needs no hosting and no DNS, and
+`curl -fsSL` follows redirects, so a domain you own can just point at it:
 
-```sh
-REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"
-```
-
-Serve `install.sh` at `https://herdr.dev/install.sh`. Any of these work:
-
-- a redirect (302) to
-  `https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh`
+- a 302 from `https://<your-domain>/install.sh` to the raw URL
 - Cloudflare Workers / Pages, or an S3 object behind the domain
 - a one-line nginx `location = /install.sh`
 
-Note `herdr.dev/install.sh` is also one of the AI CLI installers in step 9 —
-pick a path or host that doesn't collide with it.
-
-The raw GitHub URL works today with no hosting at all:
+Where the clone comes from is a separate knob, in case you fork this:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh
+REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"   # install.sh
 ```
 
-Or clone it by hand:
+`DMC_REPO`, `DMC_BRANCH` and `DMC_DIR` all override it at runtime, so a fork
+needs no edit:
+
+```sh
+curl -fsSL .../install.sh | DMC_BRANCH=my-branch sh
+```
+
+Or skip `install.sh` and clone by hand — it only exists to do this for you:
 
 ```sh
 git clone https://github.com/zhang1605/dev-machine-setup ~/.dev-machine-config
