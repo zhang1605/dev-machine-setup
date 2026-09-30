@@ -9,7 +9,7 @@
 
 set -eu
 
-REPO="${DMC_REPO:-https://github.com/MichaelZhang-Navex/dev-machine-config.git}"
+REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"
 BRANCH="${DMC_BRANCH:-main}"
 DIR="${DMC_DIR:-$HOME/.dev-machine-config}"
 

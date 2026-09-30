@@ -119,21 +119,29 @@ Environment overrides: `DMC_REPO`, `DMC_BRANCH`, `DMC_DIR`,
 `install.sh` hardcodes where to clone from:
 
 ```sh
-REPO="${DMC_REPO:-https://github.com/MichaelZhang-Navex/dev-machine-config.git}"
+REPO="${DMC_REPO:-https://github.com/zhang1605/dev-machine-setup.git}"
 ```
 
-1. Push this repo to that URL (or edit the default).
-2. Serve `install.sh` at `https://herdr.dev/install.sh`. Any of these work:
-   - a redirect to `https://raw.githubusercontent.com/<you>/dev-machine-config/main/install.sh`
-   - Cloudflare Workers / Pages, or an S3 object behind the domain
-   - a one-line nginx `location = /install.sh`
+Serve `install.sh` at `https://herdr.dev/install.sh`. Any of these work:
 
-   Note `herdr.dev/install.sh` is also one of the AI CLI installers in step 9 —
-   pick a path or host that doesn't collide with it.
-3. Until it's hosted, the long form works everywhere:
+- a redirect (302) to
+  `https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh`
+- Cloudflare Workers / Pages, or an S3 object behind the domain
+- a one-line nginx `location = /install.sh`
+
+Note `herdr.dev/install.sh` is also one of the AI CLI installers in step 9 —
+pick a path or host that doesn't collide with it.
+
+The raw GitHub URL works today with no hosting at all:
 
 ```sh
-git clone https://github.com/MichaelZhang-Navex/dev-machine-config ~/.dev-machine-config
+curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh
+```
+
+Or clone it by hand:
+
+```sh
+git clone https://github.com/zhang1605/dev-machine-setup ~/.dev-machine-config
 bash ~/.dev-machine-config/bootstrap.sh
 ```
 
