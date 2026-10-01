@@ -43,6 +43,17 @@ check "nvim config cloned"       'test -d "$HOME/.config/nvim/.git"'
 check "homebrew"                 'test -x /home/linuxbrew/.linuxbrew/bin/brew'
 check "dev-machine on PATH"      'command -v dev-machine'
 
+echo "-- wsl packages + wiring (runtime-guarded, asserts present everywhere) --"
+# wslu is in Ubuntu's repos but AUR-only on Arch, where it is installed only
+# inside WSL.
+if command -v apt-get >/dev/null || grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
+  check "wslview (wslu)"           'command -v wslview'
+fi
+check "zshrc wsl block"            'grep -q "wsl (browser" "$HOME/.zshrc"'
+check "bashrc wsl block"           'grep -q "wsl (browser" "$HOME/.bashrc"'
+check "zshrc sets GH_BROWSER"      'grep -q "GH_BROWSER" "$HOME/.zshrc"'
+check "zshrc clipboard bridge"     'grep -q "clip.exe" "$HOME/.zshrc"'
+
 echo "-- shell wiring --"
 check "zshrc managed block"      'grep -q "dev-machine-setup" "$HOME/.zshrc"'
 check "bashrc managed block"     'grep -q "dev-machine-setup" "$HOME/.bashrc"'

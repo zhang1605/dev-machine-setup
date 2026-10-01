@@ -27,7 +27,10 @@ source "$ROOT/lib/mise.sh"
 source "$ROOT/lib/shell.sh"
 source "$ROOT/lib/ai.sh"
 source "$ROOT/lib/git.sh"
+source "$ROOT/lib/user.sh"
+source "$ROOT/lib/wsl.sh"
 NONINTERACTIVE=1
+IS_ROOT=0
 
 echo "== write_block idempotency =="
 F="$TMP/rc"
@@ -176,6 +179,44 @@ out="$(bash "$ROOT/bootstrap.sh" --list-modules 2>&1)"
 t "--list-modules lists 10 modules" "$([ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" = 10 ] && echo 0 || echo 1)"
 bash "$ROOT/bootstrap.sh" --help >/dev/null 2>&1; t "--help exits 0" $?
 bash "$ROOT/bootstrap.sh" --bogus >/dev/null 2>&1; t "unknown flag exits 2" "$([ $? = 2 ] && echo 0 || echo 1)"
+t "--help documents --user" "$(bash "$ROOT/bootstrap.sh" --help 2>&1 | grep -q -- '--user=NAME'; echo $?)"
+
+echo "== dev user selection (root bootstrap) =="
+DMS_USER_ARG="michael" choose_dev_user
+t "--user=michael respected" "$([ "$TARGET_USER" = "michael" ] && echo 0 || echo 1)"
+DMS_USER_ARG="" choose_dev_user
+t "default user is michael" "$([ "$TARGET_USER" = "michael" ] && echo 0 || echo 1)"
+DMS_USER_ARG="Alice_X-1" choose_dev_user
+t "username lowercased" "$([ "$TARGET_USER" = "alice_x-1" ] && echo 0 || echo 1)"
+DMS_USER_ARG=""
+IS_ROOT=0; ensure_dev_user; t "non-root: user step is a no-op" $?
+
+echo "== wsl detection =="
+unset WSL_DISTRO_NAME WSLENV
+if is_wsl; then t "not WSL here" 1 0; else t "not WSL here" 0; fi
+WSL_DISTRO_NAME=Ubuntu is_wsl; t "WSL_DISTRO_NAME detected" $?
+WSLENV=WT_SESSION is_wsl; t "WSLENV detected" $?
+unset WSL_DISTRO_NAME WSLENV
+
+echo "== wsl browser preference =="
+t "no browser without helpers" "$(PATH=/nonexistent wsl_browser_cmd >/dev/null 2>&1; echo $((1 - $?)))"
+FAKEBIN="$TMP/fakebin"; mkdir -p "$FAKEBIN"
+printf '#!/bin/sh\nexit 0\n' > "$FAKEBIN/wslview"; chmod +x "$FAKEBIN/wslview"
+t "wslview preferred" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = wslview ] && echo 0 || echo 1)"
+rm "$FAKEBIN/wslview"
+printf '#!/bin/sh\nexit 0\n' > "$FAKEBIN/powershell.exe"; chmod +x "$FAKEBIN/powershell.exe"
+t "powershell fallback" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = "powershell.exe start" ] && echo 0 || echo 1)"
+
+echo "== wsl rc block =="
+ZW="$HOME/.zshrc-wsl"; : > "$ZW"
+write_block "$ZW" "$(_rc_body zsh "$ZW")"
+bash -n "$ZW"; t "zshrc with wsl block is valid shell" $?
+for n in 'wslview' 'GH_BROWSER' 'pbcopy' 'clip.exe' 'WSL_DISTRO_NAME'; do
+  t "zshrc contains: $n" "$(has "$ZW" "$n"; echo $?)"
+done
+c1="$(grep -cF 'wslview' "$ZW")"
+write_block "$ZW" "$(_rc_body zsh "$ZW")"
+t "wsl block not duplicated" "$([ "$(grep -cF 'wslview' "$ZW")" = "$c1" ] && echo 0 || echo 1)"
 
 echo "== enabled() module filter =="
 ONLY=""; SKIP=""

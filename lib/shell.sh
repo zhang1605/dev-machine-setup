@@ -108,6 +108,30 @@ alias lt='eza --git --tree --level=2'
 alias vim='nvim'
 alias lg='lazygit'
 TAIL
+
+  # Runtime-guarded: only activates inside WSL, harmless elsewhere.
+  # Forwards URLs (gh auth login, mise tools) to the Windows host browser
+  # and wires pbcopy/pbpaste to the Windows clipboard.
+  cat <<'WSL'
+
+# --- wsl (browser + clipboard forwarding to the Windows host) ---
+if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}${WSLENV:-}" ]; then
+  if command -v wslview >/dev/null 2>&1; then
+    export BROWSER="${BROWSER:-wslview}"
+    export GH_BROWSER="${GH_BROWSER:-wslview}"
+  elif command -v wsl-open >/dev/null 2>&1; then
+    export BROWSER="${BROWSER:-wsl-open}"
+    export GH_BROWSER="${GH_BROWSER:-wsl-open}"
+  fi
+  if command -v win32yank.exe >/dev/null 2>&1; then
+    alias pbcopy='win32yank.exe -i'
+    alias pbpaste='win32yank.exe -o'
+  elif command -v clip.exe >/dev/null 2>&1; then
+    alias pbcopy='clip.exe'
+    command -v powershell.exe >/dev/null 2>&1 && alias pbpaste="powershell.exe -NoProfile -NonInteractive -Command Get-Clipboard | tr -d '\r'"
+  fi
+fi
+WSL
 }
 
 # oh-my-zsh reads ZSH_THEME before it sources oh-my-zsh.sh, which happens above

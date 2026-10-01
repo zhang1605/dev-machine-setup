@@ -34,6 +34,7 @@ chk "atuin init bash"   "$(count_lines 'atuin init bash'   "$HOME/.bashrc")" 1
 chk "mise activate zsh" "$(count_lines 'mise activate zsh' "$HOME/.zshrc")"  1
 chk "zoxide init zsh"   "$(count_lines 'zoxide init zsh'   "$HOME/.zshrc")"  1
 chk "alias ll"          "$(count_lines 'alias ll='         "$HOME/.zshrc")"  1
+chk "wsl block"         "$(count_lines 'wsl (browser'       "$HOME/.zshrc")"  1
 
 echo "-- re-runs must not manufacture backups --"
 chk "nvim backups"        "$(count_paths "$HOME/.config/nvim.dms-backup.*")"             0

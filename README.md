@@ -15,6 +15,18 @@ Non-interactive (CI, cloud-init, Dockerfile), no prompts at all:
 curl -fsSL https://raw.githubusercontent.com/zhang1605/dev-machine-setup/main/install.sh | sh -s -- --yes --email=navex --ai=claude
 ```
 
+Running as **root** (ArchWSL boots as root with no user-setup step, unlike
+Ubuntu WSL)? The installer creates a user first — default `michael` — asks
+for a password, then runs everything as that user:
+
+```sh
+sh install.sh --user=michael
+```
+
+On **WSL** it also forwards URLs (`gh auth login`, etc.) to the Windows host
+browser via `wslview`, and wires `pbcopy`/`pbpaste` to the Windows clipboard
+(`win32yank.exe` when installed, else `clip.exe` / `powershell.exe`).
+
 If you'd rather not pipe a URL into a shell sight unseen — reasonable — read it
 first, then run the same file:
 
@@ -28,7 +40,8 @@ sh install.sh
 
 | # | Step | Detail |
 |---|------|--------|
-| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, and the headers mise/Homebrew want. |
+| 0 | User account | Running as root (typical ArchWSL): create user `michael` (prompt, `--user=` overrides), set a password, passwordless sudo, then re-run the whole install as that user. Non-root runs skip this. |
+| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, `wslu` (Arch: from the AUR, WSL only) + clipboard tools, and the headers mise/Homebrew want. |
 | 2 | [mise](https://mise.jdx.dev) | Installed from `mise.run`, then a generated global `~/.config/mise/config.toml`. |
 | 3 | mise tools | python 3.13, uv, go, node 23, bun, lazygit, aws-cli, gh, eza, zoxide, neovim — plus whatever optional packs you pick. |
 | 4 | oh-my-zsh | `--unattended`, keeps an existing `.zshrc`. Theme set to `bira`. |
@@ -38,6 +51,7 @@ sh install.sh
 | 8 | Neovim | `MichaelZhang-Navex/lazyvim-starter` branch `michael` → `~/.config/nvim`. |
 | 9 | AI CLIs | Multi-select: Claude Code, Codex, herdr, pi, Meta AI. |
 | 10 | Shell + git | Managed block in `.zshrc`/`.bashrc`, `ZSH_THEME`, `chsh` to zsh, global git config. |
+| 11 | WSL integration | No-op off WSL. On WSL: `BROWSER`/`GH_BROWSER` → host browser (`wslview`), `pbcopy`/`pbpaste` → Windows clipboard; warns when interop helpers are missing. |
 
 Every prompt is asked **up front**, so the slow part runs unattended.
 
@@ -60,6 +74,8 @@ and falls back to defaults.
 install.sh          POSIX-sh bootstrap: prereqs, clone, hand off
 bootstrap.sh        orchestrator: args, prompts, module dispatch, summary
 lib/common.sh       logging, distro detect, sudo, managed file blocks, tty UI
+lib/user.sh         root -> user bootstrap (create michael, sudoers, re-exec)
+lib/wsl.sh          WSL detect, host browser + clipboard checks
 lib/pkgs.sh         apt / pacman + yay
 lib/mise.sh         mise install, global config.toml, tool install
 lib/shell.sh        oh-my-zsh, .zshrc/.bashrc block, default shell
@@ -101,6 +117,8 @@ Put your own customisations **outside** those markers and they survive.
 
 ```
 -y, --yes                Non-interactive; take every default.
+    --user=NAME          Linux user to create/use when running as root
+                         (prompted, default: michael).
     --only=A,B           Run only these modules.
     --skip=A,B           Run everything except these modules.
     --mise-extras=A,B    terraform terragrunt changie duckdb snowflake ("" for none)
@@ -163,20 +181,23 @@ bash test/verify.sh                    # run on a box you just provisioned
 bash test/idempotency.sh               # run there after a second install
 ```
 
-`test/unit.sh` (51 assertions) covers managed-block replacement, the generated
+`test/unit.sh` (72 checks) covers managed-block replacement, the generated
 `config.toml` (parsed and asserted with `tomllib`), the generated rc files
 (`bash -n` plus content checks, including that atuin's own installer lines
-aren't duplicated), argument parsing, and the `--only`/`--skip` filter.
+aren't duplicated), argument parsing, the `--only`/`--skip` filter, the
+root-to-user default (`michael`, `--user=`), WSL detection/browser
+preference, and the WSL rc block (valid shell, not duplicated).
 
 `test/docker.sh` does a real end-to-end install and then runs
-`test/verify.sh` (40 checks: every tool resolved through `mise which`, python
+`test/verify.sh` (45 checks: every tool resolved through `mise which`, python
 and node pinned versions asserted, `[shell_alias]` and `$ZSH_THEME` exercised
-through `zsh -lic`, the `chsh` change read back out of `/etc/passwd`).
+through `zsh -lic`, the `chsh` change read back out of `/etc/passwd`,
+plus `wslview` presence and the WSL rc block).
 
 ### Last verified
 
 Both distros, `--platform linux/amd64`, 2026-09-30: **40/40, no warnings**,
-about 1m35s each. A second run on the same box is clean too — 13/13 in
+about 1m35s each. A second run on the same box is clean too — 14/14 in
 `test/idempotency.sh`, no warnings, no manufactured `.dms-backup.*`.
 
 The documented one-liner is verified separately, on bare `ubuntu:24.04` and

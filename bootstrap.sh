@@ -23,6 +23,9 @@ ${C_BOLD}dev-machine-setup${C_RESET}
 
 Options
   -y, --yes                Non-interactive; take every default.
+      --user=NAME          Linux user to create/use when running as root
+                           (default, prompted: michael). The rest of the
+                           install then runs as that user.
       --only=A,B           Run only these modules.
       --skip=A,B           Run everything except these modules.
       --mise-extras=A,B    Optional mise tools (empty for none).
@@ -43,10 +46,18 @@ USAGE
 NONINTERACTIVE=0
 ONLY=""
 SKIP=""
+DMS_USER_ARG=""
+
+# Quoted copy of the original argv, for the root -> user re-exec in
+# lib/user.sh (which must forward them unchanged through `su -c`).
+DMS_ORIG_ARGS_Q=""
+for _a in "$@"; do DMS_ORIG_ARGS_Q="$DMS_ORIG_ARGS_Q $(printf '%q' "$_a")"; done
+unset _a
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -y|--yes)         NONINTERACTIVE=1 ;;
+    --user=*)         DMS_USER_ARG="${1#*=}" ;;
     --only=*)         ONLY="${1#*=}" ;;
     --skip=*)         SKIP="${1#*=}" ;;
     --mise-extras=*)  MISE_EXTRAS_ARG="${1#*=}" ;;
@@ -73,6 +84,10 @@ source "$DMS_ROOT/lib/extras.sh"
 source "$DMS_ROOT/lib/ai.sh"
 # shellcheck source=lib/git.sh
 source "$DMS_ROOT/lib/git.sh"
+# shellcheck source=lib/user.sh
+source "$DMS_ROOT/lib/user.sh"
+# shellcheck source=lib/wsl.sh
+source "$DMS_ROOT/lib/wsl.sh"
 
 _in_csv() { [[ ",$1," == *",$2,"* ]]; }
 enabled() {
@@ -85,6 +100,9 @@ enabled() {
 # ----------------------------------------------------------------- preflight
 detect_os
 setup_sudo
+# ArchWSL boots as root with no user-setup step: create the user now and
+# re-exec as them, before anything user-scoped runs. No-op when not root.
+ensure_dev_user
 
 printf '\n%s\n' "${C_BOLD}${C_CYAN}dev-machine-setup${C_RESET}" >&2
 log "os        : $OS_NAME  (pkg: $PKG)"
@@ -134,6 +152,9 @@ enabled ai    && install_ai_tools
 enabled git   && configure_git
 # Last: atuin/brew may have touched the rc files, and our block wins.
 enabled shell && { configure_shells; set_zsh_theme; set_default_shell; }
+# WSL host integration (browser + clipboard). Runs after shell so the rc
+# block it checks is already in place; a no-op with one skipped line off WSL.
+configure_wsl
 
 # ------------------------------------------------------------------- summary
 ELAPSED=$(( $(date +%s) - START ))
