@@ -31,6 +31,7 @@ Options
                            Choices: claude codex herdr pi metaai
       --email=X            navex | personal | any@address
       --name="X"           git user.name
+      --theme=X            oh-my-zsh theme (default: bira)
       --list-modules       Print module names and exit.
   -h, --help               This.
 
@@ -52,6 +53,7 @@ while [[ $# -gt 0 ]]; do
     --ai=*)           AI_TOOLS_ARG="${1#*=}" ;;
     --email=*)        GIT_EMAIL_ARG="${1#*=}" ;;
     --name=*)         DMS_GIT_NAME="${1#*=}" ;;
+    --theme=*)        DMS_ZSH_THEME="${1#*=}" ;;
     --list-modules)   printf '%s\n' "${ALL_MODULES[@]}"; exit 0 ;;
     -h|--help)        usage; exit 0 ;;
     *)                printf 'Unknown option: %s\n\n' "$1" >&2; usage; exit 2 ;;
@@ -131,7 +133,7 @@ enabled nvim  && install_lazyvim
 enabled ai    && install_ai_tools
 enabled git   && configure_git
 # Last: atuin/brew may have touched the rc files, and our block wins.
-enabled shell && { configure_shells; set_default_shell; }
+enabled shell && { configure_shells; set_zsh_theme; set_default_shell; }
 
 # ------------------------------------------------------------------- summary
 ELAPSED=$(( $(date +%s) - START ))

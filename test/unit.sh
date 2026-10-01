@@ -11,7 +11,15 @@ export HOME="$TMP/home"; mkdir -p "$HOME"
 NONINTERACTIVE=1
 declare -a WARNINGS=()
 FAIL=0
-t()  { if [ "$2" = 0 ]; then printf '  PASS %s\n' "$1"; else printf '  FAIL %s\n' "$1"; FAIL=1; fi; }
+# t <label> <got> [want]   - want defaults to 0, so exit-status checks still work
+t() {
+  want="${3:-0}"
+  if [ "$2" = "$want" ]; then
+    printf '  PASS %s\n' "$1"
+  else
+    printf '  FAIL %s (got %s, want %s)\n' "$1" "$2" "$want"; FAIL=1
+  fi
+}
 has(){ grep -qF "$2" "$1"; }
 
 source "$ROOT/lib/common.sh"
@@ -119,6 +127,49 @@ B="$HOME/.bashrc"; : > "$B"
 write_block "$B" "$(_rc_body bash "$B")"
 bash -n "$B"; t "generated bashrc is valid shell" $?
 t "bashrc uses bash init" "$(has "$B" 'mise activate bash'; echo $?)"
+
+echo "== zsh theme (must land above the oh-my-zsh source line) =="
+mk_omz_rc() {
+  cat > "$1" <<'RC'
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git)
+source $ZSH/oh-my-zsh.sh
+export MINE=1
+RC
+}
+ZSHRC="$TMP/theme-rc"; mk_omz_rc "$ZSHRC"
+set_zsh_theme >/dev/null 2>&1
+t "theme replaced"            "$(grep -c '^ZSH_THEME="bira"' "$ZSHRC")" 1
+t "old theme gone"            "$(grep -c 'robbyrussell' "$ZSHRC")" 0
+t "exactly one ZSH_THEME"     "$(grep -c '^[[:space:]]*ZSH_THEME=' "$ZSHRC")" 1
+theme_ln=$(grep -n '^ZSH_THEME=' "$ZSHRC" | cut -d: -f1)
+src_ln=$(grep -n 'oh-my-zsh.sh' "$ZSHRC" | cut -d: -f1)
+t "theme precedes omz source" "$([ "$theme_ln" -lt "$src_ln" ] && echo 0 || echo 1)"
+t "user lines preserved"      "$(grep -qF 'export MINE=1' "$ZSHRC" && grep -qF 'plugins=(git)' "$ZSHRC"; echo $?)"
+set_zsh_theme >/dev/null 2>&1
+t "idempotent (still one)"    "$(grep -c '^[[:space:]]*ZSH_THEME=' "$ZSHRC")" 1
+
+# assignment stripped, but oh-my-zsh is still sourced
+ZSHRC="$TMP/theme-rc2"
+printf 'export ZSH="$HOME/.oh-my-zsh"\nsource $ZSH/oh-my-zsh.sh\n' > "$ZSHRC"
+set_zsh_theme >/dev/null 2>&1
+t "inserted when absent"      "$(grep -c '^ZSH_THEME="bira"' "$ZSHRC")" 1
+theme_ln=$(grep -n '^ZSH_THEME=' "$ZSHRC" | cut -d: -f1)
+src_ln=$(grep -n 'oh-my-zsh.sh' "$ZSHRC" | cut -d: -f1)
+t "inserted above source"     "$([ "$theme_ln" -lt "$src_ln" ] && echo 0 || echo 1)"
+
+# no oh-my-zsh at all: leave the file alone
+ZSHRC="$TMP/theme-rc3"; printf 'export MINE=1\n' > "$ZSHRC"
+set_zsh_theme >/dev/null 2>&1 && rc=0 || rc=1
+t "skips without oh-my-zsh"   "$rc" 1
+t "file untouched"            "$(cat "$ZSHRC")" "export MINE=1"
+
+# override
+ZSH_THEME_NAME="agnoster"; ZSHRC="$TMP/theme-rc4"; mk_omz_rc "$ZSHRC"
+set_zsh_theme >/dev/null 2>&1
+t "DMS_ZSH_THEME override"    "$(grep -c '^ZSH_THEME="agnoster"' "$ZSHRC")" 1
+ZSH_THEME_NAME="bira"
 
 echo "== bootstrap argument handling =="
 out="$(bash "$ROOT/bootstrap.sh" --list-modules 2>&1)"

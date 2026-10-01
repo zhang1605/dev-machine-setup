@@ -4,6 +4,7 @@
 
 ZSHRC="$HOME/.zshrc"
 BASHRC="$HOME/.bashrc"
+ZSH_THEME_NAME="${DMS_ZSH_THEME:-bira}"
 
 install_omz() {
   step "oh-my-zsh"
@@ -107,6 +108,41 @@ alias lt='eza --git --tree --level=2'
 alias vim='nvim'
 alias lg='lazygit'
 TAIL
+}
+
+# oh-my-zsh reads ZSH_THEME before it sources oh-my-zsh.sh, which happens above
+# our managed block - so setting it in the block would be read too late to have
+# any effect. Edit the assignment in place instead.
+set_zsh_theme() {
+  step "zsh theme"
+  if [[ ! -f $ZSHRC ]]; then
+    warn "no $ZSHRC yet; skipping theme"
+    return 1
+  fi
+
+  local tmp
+  tmp="$(mktemp)"
+
+  if grep -qE '^[[:space:]]*ZSH_THEME=' "$ZSHRC"; then
+    awk -v t="ZSH_THEME=\"$ZSH_THEME_NAME\"" '
+      /^[[:space:]]*ZSH_THEME=/ { print t; next }
+      { print }
+    ' "$ZSHRC" >"$tmp"
+  elif grep -q 'oh-my-zsh.sh' "$ZSHRC"; then
+    # No assignment at all (someone stripped it): insert above the source line.
+    awk -v t="ZSH_THEME=\"$ZSH_THEME_NAME\"" '
+      /oh-my-zsh\.sh/ && !done { print t; done = 1 }
+      { print }
+    ' "$ZSHRC" >"$tmp"
+  else
+    rm -f "$tmp"
+    warn "$ZSHRC has no ZSH_THEME and does not source oh-my-zsh; skipping theme"
+    return 1
+  fi
+
+  cat "$tmp" >"$ZSHRC"   # not mv: keeps the file's identity if it is a symlink
+  rm -f "$tmp"
+  ok "ZSH_THEME=\"$ZSH_THEME_NAME\""
 }
 
 configure_shells() {

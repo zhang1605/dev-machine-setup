@@ -31,13 +31,13 @@ sh install.sh
 | 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, and the headers mise/Homebrew want. |
 | 2 | [mise](https://mise.jdx.dev) | Installed from `mise.run`, then a generated global `~/.config/mise/config.toml`. |
 | 3 | mise tools | python 3.13, uv, go, node 23, bun, lazygit, aws-cli, gh, eza, zoxide, neovim — plus whatever optional packs you pick. |
-| 4 | oh-my-zsh | `--unattended`, keeps an existing `.zshrc`. |
+| 4 | oh-my-zsh | `--unattended`, keeps an existing `.zshrc`. Theme set to `bira`. |
 | 5 | atuin | Shell history. Run `atuin register` yourself if you want sync. |
 | 6 | Homebrew | Linuxbrew at `/home/linuxbrew/.linuxbrew`. Skipped when running as root. |
 | 7 | tmux | `gpakosz/.tmux` cloned to `~/.tmux`, symlinked, `.tmux.conf.local` seeded. |
 | 8 | Neovim | `MichaelZhang-Navex/lazyvim-starter` branch `michael` → `~/.config/nvim`. |
 | 9 | AI CLIs | Multi-select: Claude Code, Codex, herdr, pi, Meta AI. |
-| 10 | Shell + git | Managed block in `.zshrc`/`.bashrc`, `chsh` to zsh, global git config. |
+| 10 | Shell + git | Managed block in `.zshrc`/`.bashrc`, `ZSH_THEME`, `chsh` to zsh, global git config. |
 
 Every prompt is asked **up front**, so the slow part runs unattended.
 
@@ -107,12 +107,13 @@ Put your own customisations **outside** those markers and they survive.
     --ai=A,B             claude codex herdr pi metaai ("" for none)
     --email=X            navex | personal | any@address
     --name="X"           git user.name
+    --theme=X            oh-my-zsh theme (default: bira)
     --list-modules       Print module names and exit.
 -h, --help
 ```
 
 Environment overrides: `DMS_REPO`, `DMS_BRANCH`, `DMS_DIR`,
-`DMS_NVIM_REPO`, `DMS_NVIM_BRANCH`, `NO_COLOR`.
+`DMS_NVIM_REPO`, `DMS_NVIM_BRANCH`, `DMS_ZSH_THEME`, `NO_COLOR`.
 
 ## Anything it won't do for you
 
@@ -162,19 +163,19 @@ bash test/verify.sh                    # run on a box you just provisioned
 bash test/idempotency.sh               # run there after a second install
 ```
 
-`test/unit.sh` (40 assertions) covers managed-block replacement, the generated
+`test/unit.sh` (51 assertions) covers managed-block replacement, the generated
 `config.toml` (parsed and asserted with `tomllib`), the generated rc files
 (`bash -n` plus content checks, including that atuin's own installer lines
 aren't duplicated), argument parsing, and the `--only`/`--skip` filter.
 
 `test/docker.sh` does a real end-to-end install and then runs
-`test/verify.sh` (38 checks: every tool resolved through `mise which`, python
-and node pinned versions asserted, `[shell_alias]` exercised through
-`zsh -lic`, the `chsh` change read back out of `/etc/passwd`).
+`test/verify.sh` (40 checks: every tool resolved through `mise which`, python
+and node pinned versions asserted, `[shell_alias]` and `$ZSH_THEME` exercised
+through `zsh -lic`, the `chsh` change read back out of `/etc/passwd`).
 
 ### Last verified
 
-Both distros, `--platform linux/amd64`, 2026-09-30: **38/38, no warnings**,
+Both distros, `--platform linux/amd64`, 2026-09-30: **40/40, no warnings**,
 about 1m35s each. A second run on the same box is clean too — 13/13 in
 `test/idempotency.sh`, no warnings, no manufactured `.dms-backup.*`.
 

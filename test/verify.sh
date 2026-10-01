@@ -48,6 +48,8 @@ check "zshrc managed block"      'grep -q "dev-machine-setup" "$HOME/.zshrc"'
 check "bashrc managed block"     'grep -q "dev-machine-setup" "$HOME/.bashrc"'
 check "zsh is default shell"     'getent passwd "$(id -un)" | grep -q zsh'
 check "mise activates in zsh"    'zsh -lic "command -v mise"'
+check "ZSH_THEME is bira"        'grep -q "^ZSH_THEME=\"bira\"" "$HOME/.zshrc"'
+check "theme loaded in zsh"      'test "$(zsh -lic "echo \$ZSH_THEME" 2>/dev/null | tr -d "\r")" = bira'
 check "shell_alias l works"      'zsh -lic "alias l" | grep -q eza'
 
 echo "-- git --"
