@@ -16,9 +16,42 @@ wsl_browser_cmd() {
   return 1
 }
 
+# Windows .exe interop rides on the WSLInterop binfmt_misc entry. Under
+# systemd, WSL's drop-in for systemd-binfmt.service re-registers it - but that
+# unit is skipped when every binfmt.d dir is empty (stock Arch), and the entry
+# can go missing, leaving every .exe failing with "exec format error". A
+# binfmt.d file makes the unit run on each boot; register now for this boot.
+WSL_BINFMT_CONF=/etc/binfmt.d/WSLInterop.conf
+WSL_BINFMT_RULE=':WSLInterop:M::MZ::/init:PF'
+
+ensure_wsl_interop() {
+  [[ -x /init ]] || return 0
+  if [[ ! -f $WSL_BINFMT_CONF ]]; then
+    $SUDO mkdir -p "${WSL_BINFMT_CONF%/*}"
+    printf '%s\n' "$WSL_BINFMT_RULE" | $SUDO tee "$WSL_BINFMT_CONF" >/dev/null \
+      && ok "persisted Windows interop in $WSL_BINFMT_CONF"
+  fi
+  local bm=/proc/sys/fs/binfmt_misc
+  [[ -e $bm/register ]] || return 0
+  if [[ -e $bm/WSLInterop ]]; then
+    ok "Windows interop registered (WSLInterop)"
+  elif printf '%s\n' "$WSL_BINFMT_RULE" | $SUDO tee "$bm/register" >/dev/null 2>&1; then
+    ok "re-registered Windows interop (WSLInterop was missing)"
+  else
+    warn "Windows interop not registered; .exe files will not run"
+    log "try 'wsl --shutdown' from Windows, then reopen the distro"
+  fi
+}
+
+# `su -` in the root -> user re-exec drops the Windows PATH entries, so fall
+# back to System32 when looking for the host's clipboard tools.
+have_win() { have "$1" || [[ -x /mnt/c/Windows/System32/$1 ]]; }
+
 configure_wsl() {
   is_wsl || { skip "not WSL; skipping Windows-host integration"; return 0; }
   step "WSL integration (Windows host)"
+
+  ensure_wsl_interop
 
   local browser=""
   browser="$(wsl_browser_cmd)" || true
@@ -37,9 +70,9 @@ configure_wsl() {
   # user has installed it on the Windows side.
   if have win32yank.exe; then
     ok "clipboard via win32yank.exe (both directions)"
-  elif have clip.exe && have powershell.exe; then
+  elif have_win clip.exe && have_win WindowsPowerShell/v1.0/powershell.exe; then
     ok "clipboard via clip.exe / powershell.exe (pbcopy/pbpaste in rc)"
-  elif have clip.exe; then
+  elif have_win clip.exe; then
     ok "clipboard out via clip.exe; paste needs powershell.exe"
   else
     warn "no Windows clipboard bridge found (clip.exe missing)"
