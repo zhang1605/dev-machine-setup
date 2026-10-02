@@ -62,14 +62,13 @@ t "user lines around it kept" "$(grep -qF 'export MINE=1' "$L" && grep -qF 'expo
 
 echo "== non-interactive defaults =="
 choose_mise_extras
-t "mise defaults = terraform terragrunt changie duckdb" \
-  "$([ "${MISE_EXTRAS[*]}" = "terraform terragrunt changie duckdb" ] && echo 0 || echo 1)"
+t "mise defaults = snowflake" "$([ "${MISE_EXTRAS[*]}" = "snowflake" ] && echo 0 || echo 1)"
 MISE_EXTRAS_ARG="terraform,duckdb" choose_mise_extras
 t "--mise-extras respected" "$([ "${MISE_EXTRAS[*]}" = "terraform duckdb" ] && echo 0 || echo 1)"
 MISE_EXTRAS_ARG="" choose_mise_extras
 t "--mise-extras= means none" "$([ "${#MISE_EXTRAS[@]}" = 0 ] && echo 0 || echo 1)"
 choose_ai_tools
-t "ai default = claude" "$([ "${AI_TOOLS[*]}" = "claude" ] && echo 0 || echo 1)"
+t "ai default = claude herdr" "$([ "${AI_TOOLS[*]}" = "claude herdr" ] && echo 0 || echo 1)"
 AI_TOOLS_ARG="claude,codex,pi" choose_ai_tools
 t "--ai respected" "$([ "${AI_TOOLS[*]}" = "claude codex pi" ] && echo 0 || echo 1)"
 GIT_EMAIL_ARG=personal choose_git_identity
@@ -81,7 +80,7 @@ t "--email=custom" "$([ "$GIT_EMAIL" = "a@b.co" ] && echo 0 || echo 1)"
 
 echo "== mise config.toml =="
 MISE_CONFIG_DIR="$TMP/miseconf"; MISE_CONFIG="$MISE_CONFIG_DIR/config.toml"
-choose_mise_extras
+MISE_EXTRAS_ARG="terraform,terragrunt,changie,duckdb" choose_mise_extras
 write_mise_config >/dev/null 2>&1
 t "config written" "$([ -f "$MISE_CONFIG" ] && echo 0 || echo 1)"
 python3 - "$MISE_CONFIG" <<'PY'
@@ -98,7 +97,7 @@ al=d['shell_alias']
 assert al['l']=="eza --git -l -o --no-permissions --header", al
 assert al['claude']=="claude --dangerously-skip-permissions"
 assert al['ca']=="claude --dangerously-skip-permissions"
-assert 'pipx:snowflake-cli' not in tools, "snowflake should be off by default"
+assert 'pipx:snowflake-cli' not in tools, "snowflake was not chosen"
 print("  PASS valid TOML with all expected keys")
 PY
 [ $? = 0 ] || FAIL=1
@@ -110,6 +109,17 @@ d=tomllib.load(open('$MISE_CONFIG','rb'))
 assert d['tools']['pipx:snowflake-cli']=='latest'
 assert 'terraform' not in d['tools']
 print('  PASS snowflake-only variant is valid TOML')" || FAIL=1
+
+echo "== re-run menus start from what is installed =="
+# MISE_CONFIG now holds the snowflake-only config from the previous run.
+choose_mise_extras
+t "re-run mise extras = snowflake" "$([ "${MISE_EXTRAS[*]}" = "snowflake" ] && echo 0 || echo 1)"
+mkdir -p "$HOME/.local/bin"
+printf '#!/bin/sh\n' > "$HOME/.local/bin/herdr"; chmod +x "$HOME/.local/bin/herdr"
+printf '#!/bin/sh\n' > "$HOME/.local/bin/muse"; chmod +x "$HOME/.local/bin/muse"
+PATH="/usr/bin:/bin" choose_ai_tools
+t "re-run ai = installed (herdr metaai)" "$([ "${AI_TOOLS[*]}" = "herdr metaai" ] && echo 0 || echo 1)"
+rm -f "$HOME/.local/bin/herdr" "$HOME/.local/bin/muse"
 # backup on foreign config
 printf 'x = 1\n' > "$MISE_CONFIG"
 write_mise_config >/dev/null 2>&1

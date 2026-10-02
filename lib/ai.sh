@@ -4,9 +4,9 @@
 
 # key|label|default
 AI_MENU=(
-  "claude|Claude Code       ${C_DIM}claude.ai/install.sh${C_RESET}|on"
+  "claude|Claude Code        ${C_DIM}claude.ai/install.sh${C_RESET}|on"
   "codex|Codex CLI          ${C_DIM}chatgpt.com/codex/install.sh${C_RESET}|off"
-  "herdr|herdr              ${C_DIM}herdr.dev/install.sh${C_RESET}|off"
+  "herdr|herdr              ${C_DIM}herdr.dev/install.sh${C_RESET}|on"
   "pi|pi                 ${C_DIM}pi.dev/install.sh${C_RESET}|off"
   "metaai|Meta AI dev CLI    ${C_DIM}dev.meta.ai/install.sh${C_RESET}|off"
 )
@@ -90,13 +90,23 @@ install_herdr_integrations() {
   fi
 }
 
+# The command each AI installer leaves behind (in ~/.local/bin, which may not
+# be on PATH yet).
+_ai_installed() {
+  local bin="$1"
+  [[ $1 == metaai ]] && bin=muse
+  have "$bin" || [[ -x $HOME/.local/bin/$bin ]]
+}
+
 choose_ai_tools() {
   if [[ -n ${AI_TOOLS_ARG+x} ]]; then
     AI_TOOLS=()
     [[ -n $AI_TOOLS_ARG ]] && IFS=',' read -r -a AI_TOOLS <<<"$AI_TOOLS_ARG"
     return 0
   fi
-  read_lines AI_TOOLS < <(ui_multiselect "AI coding CLIs" "${AI_MENU[@]}")
+  local -a menu=("${AI_MENU[@]}")
+  dms_previous_run && read_lines menu < <(menu_from_state _ai_installed "${AI_MENU[@]}")
+  read_lines AI_TOOLS < <(ui_multiselect "AI coding CLIs" "${menu[@]}")
 }
 
 install_ai_tools() {

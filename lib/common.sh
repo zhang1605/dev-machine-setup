@@ -198,6 +198,18 @@ ui_multiselect() {
   for ((i = 0; i < n; i++)); do ((state[i])) && printf '%s\n' "${keys[i]}"; done
 }
 
+# menu_from_state PREDICATE "key|Label|default" ... -> the same items with each
+# default replaced by whether `PREDICATE key` succeeds, so a re-run's menu
+# starts from what is installed rather than from the first-run defaults.
+menu_from_state() {
+  local pred="$1" item k l d; shift
+  for item in "$@"; do
+    IFS='|' read -r k l d <<<"$item"
+    if "$pred" "$k"; then d=on; else d=off; fi
+    printf '%s|%s|%s\n' "$k" "$l" "$d"
+  done
+}
+
 # ui_select "Title" "key|Label" ... -> prints one key
 ui_select() {
   local title="$1"; shift

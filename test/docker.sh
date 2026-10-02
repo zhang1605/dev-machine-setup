@@ -83,10 +83,10 @@ for target in "${TARGETS[@]}"; do
     echo 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev
     cp -r /src /home/dev/.dev-machine-setup
     chown -R dev:dev /home/dev/.dev-machine-setup
-    su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --email=navex'
+    su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --mise-extras=terraform,duckdb --email=navex'
     if [ -n "${DMS_TWICE:-}" ]; then
       echo; echo '########## second run (idempotency) ##########'
-      su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --email=navex'
+      su - dev -c 'bash ~/.dev-machine-setup/bootstrap.sh --yes --ai= --mise-extras=terraform,duckdb --email=navex'
       su - dev -c 'bash ~/.dev-machine-setup/test/idempotency.sh'
     fi
     su - dev -c 'bash ~/.dev-machine-setup/test/verify.sh'

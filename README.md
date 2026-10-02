@@ -58,9 +58,11 @@ Every prompt is asked **up front**, so the slow part runs unattended.
 
 ## Interactive choices
 
-- **Optional mise tools** — terraform, terragrunt, changie, duckdb (all on by
-  default), snowflake-cli (off by default; the pipx install is slow).
-- **AI CLIs** — Claude Code on by default, the rest off.
+- **Optional mise tools** — snowflake-cli (on by default; the pipx install is
+  slow), terraform, terragrunt, changie, duckdb (off by default).
+- **AI CLIs** — Claude Code and herdr on by default, the rest off.
+
+On a re-run both menus start from what is already installed instead.
 - **git identity** — `michael.zhang@navex.com`, `zhang1605@gmail.com`, or type
   your own. `user.name` defaults to `Michael Zhang`.
 

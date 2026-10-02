@@ -23,11 +23,11 @@ MISE_CORE_TOOLS=(
 
 # key|label|default
 MISE_EXTRA_MENU=(
-  "terraform|terraform|on"
-  "terragrunt|terragrunt  ${C_DIM}(github:gruntwork-io/terragrunt)${C_RESET}|on"
-  "changie|changie|on"
-  "duckdb|duckdb|on"
-  "snowflake|snowflake-cli  ${C_DIM}(pipx; slower install)${C_RESET}|off"
+  "terraform|terraform|off"
+  "terragrunt|terragrunt  ${C_DIM}(github:gruntwork-io/terragrunt)${C_RESET}|off"
+  "changie|changie|off"
+  "duckdb|duckdb|off"
+  "snowflake|snowflake-cli  ${C_DIM}(pipx; slower install)${C_RESET}|on"
 )
 
 _mise_extra_line() {
@@ -40,13 +40,26 @@ _mise_extra_line() {
   esac
 }
 
+# True once a previous run has written our mise config; menus then default to
+# what that run chose instead of the first-run defaults.
+dms_previous_run() {
+  [[ -f $MISE_CONFIG ]] && head -1 "$MISE_CONFIG" | grep -qF "$MISE_MARKER"
+}
+
+_mise_extra_installed() {
+  grep -qxF "$(_mise_extra_line "$1")" "$MISE_CONFIG" 2>/dev/null
+}
+
 choose_mise_extras() {
   if [[ -n ${MISE_EXTRAS_ARG+x} ]]; then
     MISE_EXTRAS=()
     [[ -n $MISE_EXTRAS_ARG ]] && IFS=',' read -r -a MISE_EXTRAS <<<"$MISE_EXTRAS_ARG"
     return 0
   fi
-  read_lines MISE_EXTRAS < <(ui_multiselect "Optional mise tools" "${MISE_EXTRA_MENU[@]}")
+  local -a menu=("${MISE_EXTRA_MENU[@]}")
+  dms_previous_run \
+    && read_lines menu < <(menu_from_state _mise_extra_installed "${MISE_EXTRA_MENU[@]}")
+  read_lines MISE_EXTRAS < <(ui_multiselect "Optional mise tools" "${menu[@]}")
 }
 
 install_mise() {
