@@ -49,7 +49,7 @@ sh install.sh
 | 6 | Homebrew | Linuxbrew at `/home/linuxbrew/.linuxbrew`. Skipped when running as root. |
 | 7 | tmux | `gpakosz/.tmux` cloned to `~/.tmux`, symlinked, `.tmux.conf.local` seeded. |
 | 8 | Neovim | `MichaelZhang-Navex/lazyvim-starter` branch `michael` → `~/.config/nvim`. |
-| 9 | AI CLIs | Multi-select: Claude Code, Codex, herdr, pi, Meta AI. Whenever herdr is installed, adds the [`herdr-auto-title`](https://github.com/kryptamine/herdr-auto-title) plugin (built with mise's Go). |
+| 9 | AI CLIs | Multi-select: Claude Code, Codex, herdr, pi, Meta AI. Whenever herdr is installed, adds the [`herdr-auto-title`](https://github.com/kryptamine/herdr-auto-title) plugin (built with mise's Go) and, with Claude Code, herdr's `claude` integration. |
 | 10 | Shell + git | Managed block in `.zshrc`/`.bashrc`, `ZSH_THEME`, `chsh` to zsh, global git config. |
 | 11 | WSL integration | No-op off WSL. On WSL: `BROWSER`/`GH_BROWSER` → host browser (`wslview`), `pbcopy`/`pbpaste` → Windows clipboard; warns when interop helpers are missing. |
 

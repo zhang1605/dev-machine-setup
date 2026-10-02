@@ -50,6 +50,22 @@ install_herdr_plugins() {
   herdr plugin action invoke herdr.auto-title.restart >/dev/null 2>&1 || true
 }
 
+# herdr's agent-state hooks for the agent CLIs present (Claude Code: a hook in
+# ~/.claude/hooks plus a settings.json entry). Lets herdr, and auto-title,
+# see what each agent is doing.
+install_herdr_integrations() {
+  have herdr || return 0
+  if have claude || [[ -x $HOME/.local/bin/claude ]]; then
+    if herdr integration status 2>/dev/null | grep -q '^claude: current'; then
+      skip "herdr claude integration (already current)"
+    elif herdr integration install claude >/dev/null </dev/null; then
+      ok "herdr claude integration"
+    else
+      warn "herdr claude integration failed to install"
+    fi
+  fi
+}
+
 choose_ai_tools() {
   if [[ -n ${AI_TOOLS_ARG+x} ]]; then
     AI_TOOLS=()
@@ -61,7 +77,7 @@ choose_ai_tools() {
 
 install_ai_tools() {
   if [[ ${#AI_TOOLS[@]} -eq 0 ]]; then
-    step "AI CLIs"; skip "none selected"; install_herdr_plugins; return 0
+    step "AI CLIs"; skip "none selected"; install_herdr_plugins; install_herdr_integrations; return 0
   fi
   step "AI CLIs (${AI_TOOLS[*]})"
   local t
@@ -71,4 +87,5 @@ install_ai_tools() {
     if _ai_install_one "$t" <&3; then ok "$t"; else warn "$t installer failed"; fi
   done
   install_herdr_plugins
+  install_herdr_integrations
 }
