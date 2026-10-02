@@ -23,10 +23,13 @@ _ai_install_one() {
 }
 
 # herdr plugins, installed whenever herdr is present (chosen now or earlier).
-# herdr builds them from source, so they need Go - provided by mise.
+# herdr builds auto-title from source, so it needs Go - provided by mise.
+# herdr-bar is plain Python 3 (stdlib only).
 HERDR_PLUGINS=(
   kryptamine/herdr-auto-title
+  jeffarese/herdr-bar
 )
+HERDR_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/herdr/config.toml"
 
 _herdr_go() {
   if have go; then "$@"; else mise exec go -- "$@"; fi
@@ -34,7 +37,6 @@ _herdr_go() {
 
 install_herdr_plugins() {
   have herdr || return 0
-  have go || have mise || { warn "herdr plugins need Go; skipping"; return 0; }
   local installed p
   installed="$(herdr plugin list 2>/dev/null)"
   for p in "${HERDR_PLUGINS[@]}"; do
@@ -46,8 +48,30 @@ install_herdr_plugins() {
       warn "herdr plugin $p failed to install"
     fi
   done
-  # Plugins only start with the herdr server; start auto-title now if one runs.
+  _herdr_bar_keybinding
+  # Plugins only start with the herdr server; start them now if one runs.
   herdr plugin action invoke herdr.auto-title.restart >/dev/null 2>&1 || true
+  herdr plugin action invoke herdr-bar.start-titles >/dev/null 2>&1 || true
+}
+
+# herdr adds no keybindings for plugins; bind the command bar to prefix+k.
+_herdr_bar_keybinding() {
+  herdr plugin list 2>/dev/null | grep -qF herdr-bar || return 0
+  if grep -qF 'herdr-bar.open' "$HERDR_CONFIG" 2>/dev/null; then
+    skip "herdr-bar keybinding (already in config.toml)"
+    return 0
+  fi
+  mkdir -p "${HERDR_CONFIG%/*}"
+  cat >>"$HERDR_CONFIG" <<'TOML'
+
+[[keys.command]]
+key = "prefix+k"
+type = "plugin_action"
+command = "herdr-bar.open"
+description = "command bar"
+TOML
+  ok "herdr-bar on prefix+k (config.toml)"
+  herdr server reload-config >/dev/null 2>&1 || true
 }
 
 # herdr's agent-state hooks for the agent CLIs present (Claude Code: a hook in
