@@ -22,6 +22,34 @@ _ai_install_one() {
   esac
 }
 
+# herdr plugins, installed whenever herdr is present (chosen now or earlier).
+# herdr builds them from source, so they need Go - provided by mise.
+HERDR_PLUGINS=(
+  kryptamine/herdr-auto-title
+)
+
+_herdr_go() {
+  if have go; then "$@"; else mise exec go -- "$@"; fi
+}
+
+install_herdr_plugins() {
+  have herdr || return 0
+  have go || have mise || { warn "herdr plugins need Go; skipping"; return 0; }
+  local installed p
+  installed="$(herdr plugin list 2>/dev/null)"
+  for p in "${HERDR_PLUGINS[@]}"; do
+    if grep -qF "${p#*/}" <<<"$installed"; then
+      skip "herdr plugin ${p#*/} (already installed)"
+    elif _herdr_go herdr plugin install -y "$p" </dev/null; then
+      ok "herdr plugin ${p#*/}"
+    else
+      warn "herdr plugin $p failed to install"
+    fi
+  done
+  # Plugins only start with the herdr server; start auto-title now if one runs.
+  herdr plugin action invoke herdr.auto-title.restart >/dev/null 2>&1 || true
+}
+
 choose_ai_tools() {
   if [[ -n ${AI_TOOLS_ARG+x} ]]; then
     AI_TOOLS=()
@@ -33,7 +61,7 @@ choose_ai_tools() {
 
 install_ai_tools() {
   if [[ ${#AI_TOOLS[@]} -eq 0 ]]; then
-    step "AI CLIs"; skip "none selected"; return 0
+    step "AI CLIs"; skip "none selected"; install_herdr_plugins; return 0
   fi
   step "AI CLIs (${AI_TOOLS[*]})"
   local t
@@ -42,4 +70,5 @@ install_ai_tools() {
     log "installing $t"
     if _ai_install_one "$t" <&3; then ok "$t"; else warn "$t installer failed"; fi
   done
+  install_herdr_plugins
 }
