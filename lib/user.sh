@@ -87,10 +87,16 @@ ensure_dev_user() {
   # Forward the original arguments unchanged (--user= is harmless to keep:
   # a non-root run ignores it). A login shell gives the user a correct
   # $HOME; DMS_DIR is carried inside the command because `su -` scrubs env.
-  local qroot qargs
+  #
+  # Not `su -c`: util-linux su runs that command under setsid(), so it has no
+  # controlling terminal, /dev/tty fails to open, and every later prompt
+  # (mise extras, AI CLIs, git identity) silently takes its default.
+  # --session-command keeps the caller's session and with it the tty.
+  local qroot qargs su_cmd=-c
   qroot="$(printf '%s' "$DMS_ROOT" | sed "s/'/'\\\\''/g")"
   qargs="${DMS_ORIG_ARGS_Q:-}"
+  su --help 2>&1 | grep -q -- '--session-command' && su_cmd=--session-command
   # shellcheck disable=SC2086
-  exec su - "$TARGET_USER" -c \
+  exec su - "$TARGET_USER" "$su_cmd" \
     "DMS_DIR='$qroot' bash '$qroot/bootstrap.sh' $qargs"
 }

@@ -41,7 +41,7 @@ sh install.sh
 | # | Step | Detail |
 |---|------|--------|
 | 0 | User account | Running as root (typical ArchWSL): create user `michael` (prompt, `--user=` overrides), set a password, passwordless sudo, then re-run the whole install as that user. Non-root runs skip this. |
-| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, `wslu` (Arch: from the AUR, WSL only) + clipboard tools, and the headers mise/Homebrew want. |
+| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, `wslu` (Arch: from the AUR, WSL only) + clipboard tools, and the headers mise/Homebrew want. Generates `en_US.UTF-8` and makes it the default `LANG` (override with `DMS_LOCALE=`; a locale you already chose is kept). |
 | 2 | [mise](https://mise.jdx.dev) | Installed from `mise.run`, then a generated global `~/.config/mise/config.toml`. |
 | 3 | mise tools | python 3.13, uv, go, node 23, bun, lazygit, aws-cli, gh, eza, zoxide, neovim — plus whatever optional packs you pick. |
 | 4 | oh-my-zsh | `--unattended`, keeps an existing `.zshrc`. Theme set to `bira`. |

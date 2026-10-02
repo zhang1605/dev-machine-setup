@@ -33,6 +33,8 @@ check "ripgrep"                  'command -v rg'
 check "fd"                       'command -v fd'
 check "tmux"                     'command -v tmux'
 check "build toolchain"          'command -v cc || command -v gcc'
+check "utf-8 locale generated"   'locale -a | grep -qix "en_us.utf-\?8"'
+check "LANG default set"         'grep -hs "^LANG=" /etc/locale.conf /etc/default/locale | grep -qvE "=\"?(C|POSIX)"'
 
 echo "-- extras --"
 check "oh-my-zsh present"        'test -d "$HOME/.oh-my-zsh"'
