@@ -116,7 +116,10 @@ TAIL
 
 # --- wsl (browser + clipboard forwarding to the Windows host) ---
 if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}${WSLENV:-}" ]; then
-  if command -v wslview >/dev/null 2>&1; then
+  if command -v wsl-browser >/dev/null 2>&1; then
+    export BROWSER="${BROWSER:-wsl-browser}"
+    export GH_BROWSER="${GH_BROWSER:-wsl-browser}"
+  elif command -v wslview >/dev/null 2>&1; then
     export BROWSER="${BROWSER:-wslview}"
     export GH_BROWSER="${GH_BROWSER:-wslview}"
   elif command -v wsl-open >/dev/null 2>&1; then

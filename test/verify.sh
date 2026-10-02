@@ -46,10 +46,9 @@ check "homebrew"                 'test -x /home/linuxbrew/.linuxbrew/bin/brew'
 check "dev-machine on PATH"      'command -v dev-machine'
 
 echo "-- wsl packages + wiring (runtime-guarded, asserts present everywhere) --"
-# wslu is in Ubuntu's repos but AUR-only on Arch, where it is installed only
-# inside WSL.
-if command -v apt-get >/dev/null || grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
-  check "wslview (wslu)"           'command -v wslview'
+# wsl-browser is linked only inside WSL.
+if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
+  check "wsl-browser on PATH"      'command -v wsl-browser'
 fi
 check "zshrc wsl block"            'grep -q "wsl (browser" "$HOME/.zshrc"'
 check "bashrc wsl block"           'grep -q "wsl (browser" "$HOME/.bashrc"'

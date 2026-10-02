@@ -202,7 +202,10 @@ echo "== wsl browser preference =="
 t "no browser without helpers" "$(PATH=/nonexistent wsl_browser_cmd >/dev/null 2>&1; echo $((1 - $?)))"
 FAKEBIN="$TMP/fakebin"; mkdir -p "$FAKEBIN"
 printf '#!/bin/sh\nexit 0\n' > "$FAKEBIN/wslview"; chmod +x "$FAKEBIN/wslview"
-t "wslview preferred" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = wslview ] && echo 0 || echo 1)"
+printf '#!/bin/sh\nexit 0\n' > "$FAKEBIN/wsl-browser"; chmod +x "$FAKEBIN/wsl-browser"
+t "wsl-browser preferred" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = wsl-browser ] && echo 0 || echo 1)"
+rm "$FAKEBIN/wsl-browser"
+t "wslview next" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = wslview ] && echo 0 || echo 1)"
 rm "$FAKEBIN/wslview"
 printf '#!/bin/sh\nexit 0\n' > "$FAKEBIN/powershell.exe"; chmod +x "$FAKEBIN/powershell.exe"
 t "powershell fallback" "$([ "$(PATH="$FAKEBIN:/usr/bin:/bin" wsl_browser_cmd)" = "powershell.exe start" ] && echo 0 || echo 1)"
@@ -211,7 +214,7 @@ echo "== wsl rc block =="
 ZW="$HOME/.zshrc-wsl"; : > "$ZW"
 write_block "$ZW" "$(_rc_body zsh "$ZW")"
 bash -n "$ZW"; t "zshrc with wsl block is valid shell" $?
-for n in 'wslview' 'GH_BROWSER' 'pbcopy' 'clip.exe' 'WSL_DISTRO_NAME'; do
+for n in 'wsl-browser' 'wslview' 'GH_BROWSER' 'pbcopy' 'clip.exe' 'WSL_DISTRO_NAME'; do
   t "zshrc contains: $n" "$(has "$ZW" "$n"; echo $?)"
 done
 c1="$(grep -cF 'wslview' "$ZW")"

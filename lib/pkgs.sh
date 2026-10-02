@@ -8,7 +8,7 @@ APT_PACKAGES=(
   zsh vim tmux
   fzf ripgrep fd-find jq tree htop less man-db procps rsync openssh-client
   unzip zip tar gzip xz-utils bzip2
-  wslu wl-clipboard xclip
+  wl-clipboard xclip
   libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev
   libncurses-dev libffi-dev liblzma-dev tk-dev uuid-dev
   python3 python3-venv
@@ -112,17 +112,6 @@ _pacman_install() {
     || die "pacman install failed; see the error above"
   ok "pacman packages installed"
   _install_yay
-  _install_wslu_aur
-}
-
-# wslu is AUR-only on Arch (one missing target aborts the whole pacman
-# transaction), and it is only useful inside WSL.
-_install_wslu_aur() {
-  is_wsl || return 0
-  if have wslview; then skip "wslu already installed"; return 0; fi
-  have yay || { warn "no yay; install wslu from the AUR for wslview"; return 0; }
-  yay -S --needed --noconfirm wslu <&3 && ok "wslu installed (AUR)" \
-    || warn "wslu AUR install failed"
 }
 
 _install_yay() {

@@ -8,8 +8,11 @@ is_wsl() {
   grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null
 }
 
-# Best available command to open a URL on the Windows host.
+# Best available command to open a URL on the Windows host. wsl-browser
+# (bin/, PowerShell Start-Process underneath) replaces wslview: wslu is
+# discontinued and gone from Ubuntu 26.04+; an installed wslview still works.
 wsl_browser_cmd() {
+  if have wsl-browser; then printf 'wsl-browser'; return 0; fi
   if have wslview; then printf 'wslview'; return 0; fi
   if have wsl-open; then printf 'wsl-open'; return 0; fi
   if have powershell.exe; then printf 'powershell.exe start'; return 0; fi
@@ -53,6 +56,10 @@ configure_wsl() {
 
   ensure_wsl_interop
 
+  mkdir -p "$HOME/.local/bin"
+  ln -sfn "$DMS_ROOT/bin/wsl-browser" "$HOME/.local/bin/wsl-browser"
+  ok "wsl-browser -> ~/.local/bin (opens URLs via PowerShell)"
+
   local browser=""
   browser="$(wsl_browser_cmd)" || true
   if [[ -n $browser ]]; then
@@ -61,8 +68,8 @@ configure_wsl() {
     ok "browser -> Windows host via $browser (BROWSER, GH_BROWSER)"
     log "gh auth login will open host Chrome/Edge automatically"
   else
-    warn "no wslview/powershell.exe found; URLs will not open on the host"
-    log "install wslu (provides wslview) or enable WSL interop"
+    warn "no wsl-browser/powershell.exe found; URLs will not open on the host"
+    log "enable WSL interop, then re-run"
   fi
 
   # Clipboard WSL -> Windows always works via clip.exe when interop is on;

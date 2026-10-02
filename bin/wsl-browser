@@ -1,0 +1,29 @@
+#!/bin/sh
+# Open URLs (or files) from WSL in the Windows default app - a stand-in for
+# wslview, whose wslu package is discontinued and gone from Ubuntu 26.04+.
+# explorer.exe and `cmd.exe /c start` were tried and silently opened nothing;
+# PowerShell's Start-Process works. The target travels in an environment
+# variable (shared via WSLENV) rather than in the command text, so quotes,
+# `&` and `#` in a URL need no escaping.
+[ $# -gt 0 ] || { echo "usage: wsl-browser URL|PATH..." >&2; exit 2; }
+
+if command -v powershell.exe >/dev/null 2>&1; then
+  ps=powershell.exe
+elif [ -x /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe ]; then
+  ps=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+else
+  echo "wsl-browser: powershell.exe not found (is WSL interop enabled?)" >&2
+  exit 1
+fi
+
+export WSLENV="WSL_BROWSER_TARGET${WSLENV:+:$WSLENV}"
+status=0
+for target in "$@"; do
+  # Local paths need a Windows path; URLs and file:// go through as-is.
+  if [ -e "$target" ]; then
+    target="$(wslpath -w "$target")" || { status=1; continue; }
+  fi
+  WSL_BROWSER_TARGET="$target" "$ps" -NoProfile -NonInteractive \
+    -Command 'Start-Process -FilePath $env:WSL_BROWSER_TARGET' || status=1
+done
+exit "$status"

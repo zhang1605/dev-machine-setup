@@ -24,7 +24,8 @@ sh install.sh --user=michael
 ```
 
 On **WSL** it also forwards URLs (`gh auth login`, etc.) to the Windows host
-browser via `wslview`, and wires `pbcopy`/`pbpaste` to the Windows clipboard
+browser via `wsl-browser` (a small PowerShell `Start-Process` wrapper in `bin/`; `wslu`/`wslview`
+is discontinued and gone from Ubuntu 26.04+), and wires `pbcopy`/`pbpaste` to the Windows clipboard
 (`win32yank.exe` when installed, else `clip.exe` / `powershell.exe`).
 
 If you'd rather not pipe a URL into a shell sight unseen — reasonable — read it
@@ -41,7 +42,7 @@ sh install.sh
 | # | Step | Detail |
 |---|------|--------|
 | 0 | User account | Running as root (typical ArchWSL): create user `michael` (prompt, `--user=` overrides), set a password, passwordless sudo, then re-run the whole install as that user. Non-root runs skip this. |
-| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, `wslu` (Arch: from the AUR, WSL only) + clipboard tools, and the headers mise/Homebrew want. Generates `en_US.UTF-8` and makes it the default `LANG` (override with `DMS_LOCALE=`; a locale you already chose is kept). |
+| 1 | System packages | `apt` on Ubuntu/Debian, `pacman` on Arch (plus `yay-bin` from the AUR). Build toolchain, `zsh`, `vim`, `tmux`, `fzf`, `ripgrep`, `fd`, `jq`, clipboard tools, and the headers mise/Homebrew want. Generates `en_US.UTF-8` and makes it the default `LANG` (override with `DMS_LOCALE=`; a locale you already chose is kept). |
 | 2 | [mise](https://mise.jdx.dev) | Installed from `mise.run`, then a generated global `~/.config/mise/config.toml`. |
 | 3 | mise tools | python 3.13, uv, go, node 23, bun, lazygit, aws-cli, gh, eza, zoxide, neovim — plus whatever optional packs you pick. |
 | 4 | oh-my-zsh | `--unattended`, keeps an existing `.zshrc`. Theme set to `bira`. |
@@ -51,7 +52,7 @@ sh install.sh
 | 8 | Neovim | `MichaelZhang-Navex/lazyvim-starter` branch `michael` → `~/.config/nvim`. |
 | 9 | AI CLIs | Multi-select: Claude Code, Codex, herdr, pi, Meta AI. Whenever herdr is installed, adds the [`herdr-auto-title`](https://github.com/kryptamine/herdr-auto-title) plugin (built with mise's Go) and [`herdr-bar`](https://github.com/jeffarese/herdr-bar) (bound to `prefix+k`), plus herdr's `claude` integration when Claude Code is installed. |
 | 10 | Shell + git | Managed block in `.zshrc`/`.bashrc`, `ZSH_THEME`, `chsh` to zsh, global git config. |
-| 11 | WSL integration | No-op off WSL. On WSL: `BROWSER`/`GH_BROWSER` → host browser (`wslview`), `pbcopy`/`pbpaste` → Windows clipboard; warns when interop helpers are missing. |
+| 11 | WSL integration | No-op off WSL. On WSL: `BROWSER`/`GH_BROWSER` → host browser (`wsl-browser`, see below), `pbcopy`/`pbpaste` → Windows clipboard; warns when interop helpers are missing. |
 
 Every prompt is asked **up front**, so the slow part runs unattended.
 
@@ -192,7 +193,7 @@ preference, and the WSL rc block (valid shell, not duplicated).
 `test/verify.sh` (45 checks: every tool resolved through `mise which`, python
 and node pinned versions asserted, `[shell_alias]` and `$ZSH_THEME` exercised
 through `zsh -lic`, the `chsh` change read back out of `/etc/passwd`,
-plus `wslview` presence and the WSL rc block).
+plus `wsl-browser` presence and the WSL rc block).
 
 ### Last verified
 
